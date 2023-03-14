@@ -2,7 +2,7 @@
   "name": "portfolio",
   "private": true,
   "version": "0.0.0",
-  "homepage": "https://jack0237.github.io/Portfolio",
+  "homepage": "https://jack0237.github.io/Portfolio/",
   "type": "module",
   "scripts": {
     "predeploy": "npm run build",
