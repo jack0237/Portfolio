@@ -4,10 +4,13 @@ import homeLogo from "../../Assets/home-main.svg";
 import Particle from "../Particle";
 import Home2 from "./Home2";
 import Type from "./Type";
+import About from "../About/About";
+import Projects from "../Projects/Projects";
 
 function Home() {
   return (
     <section>
+      {/* Home Section */}
       <Container fluid className="home-section" id="home">
         <Particle />
         <Container className="home-content">
@@ -16,7 +19,7 @@ function Home() {
               <h1 style={{ paddingBottom: 15 }} className="heading">
                 Hi There!{" "}
                 <span className="wave" role="img" aria-labelledby="wave">
-                  237
+                  👋
                 </span>
               </h1>
 
@@ -42,6 +45,16 @@ function Home() {
         </Container>
       </Container>
       <Home2 />
+      
+      {/* About Section */}
+      <div id="about">
+        <About />
+      </div>
+      
+      {/* Projects Section */}
+      <div id="projects">
+        <Projects />
+      </div>
     </section>
   );
 }
