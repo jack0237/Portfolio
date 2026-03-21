@@ -34,22 +34,21 @@ function NavBar() {
           Jack0237
         </Link>
         <div className="curator-nav-links">
-          <a
-            href="#home"
-            onClick={(e) => handleNavigation(e, "home")}
+          <Link
+            to="/"
             className={`curator-nav-link ${
               location.pathname === "/" ? "active" : ""
             }`}
           >
             Home
-          </a>
-          <a
+          </Link>
+          {/* <a
             href="#about"
             onClick={(e) => handleNavigation(e, "about")}
             className="curator-nav-link"
           >
             About
-          </a>
+          </a> */}
           <Link
             to="/projects"
             onClick={() => updateExpanded(false)}
@@ -115,7 +114,7 @@ function NavBar() {
       {expand && (
         <div className="curator-mobile-menu">
           <a
-            href="#home"
+            href="/"
             onClick={(e) => handleNavigation(e, "home")}
             className="curator-nav-link"
           >
