@@ -1,0 +1,188 @@
+/* ===================================================
+   BLOG POST — Detailed Article View
+   =================================================== */
+
+.blog-post-page {
+  min-height: 100vh;
+  background-color: var(--background);
+  padding-bottom: 80px;
+}
+
+/* Post Hero */
+.post-hero {
+  position: relative;
+  width: 100%;
+  height: 60vh;
+  min-height: 400px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+}
+
+.post-hero-bg {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
+  animation: scaleDown 1.5s ease-out both;
+}
+
+.post-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, var(--background) 0%, rgba(19,19,19,0.5) 40%, rgba(19,19,19,0.2) 100%);
+  z-index: 1;
+}
+
+.post-hero-content {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  padding-bottom: 6rem;
+  animation: fadeInUp 0.8s 0.3s both;
+}
+
+.post-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--primary-container);
+  text-decoration: none;
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
+}
+.post-back-link:hover {
+  color: var(--primary);
+  text-decoration: none;
+  transform: translateX(-4px);
+}
+.post-back-link .material-symbols-outlined { font-size: 1rem; }
+
+.post-header-meta {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  color: var(--on-surface-variant);
+}
+.post-header-meta span.primary-text { color: var(--primary-container); }
+
+.post-header-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--on-surface);
+  margin-bottom: 0;
+  text-transform: uppercase;
+}
+.post-header-title .accent-text { color: var(--primary-container); }
+
+/* Post Article Body */
+.post-article-wrapper {
+  position: relative;
+  z-index: 20;
+  margin-top: -3rem; /* overlap the hero slightly */
+  margin-bottom: 4rem;
+  animation: fadeInUp 0.8s 0.5s both;
+}
+
+.post-article-glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 16px;
+  padding: 4rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .post-article-glass { padding: 2rem 1.5rem; }
+}
+
+.post-content {
+  font-family: 'Manrope', sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.8;
+  color: var(--on-surface-variant);
+}
+
+.post-content h2 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+}
+
+.post-content h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.post-content p {
+  margin-bottom: 1.5rem;
+}
+
+.post-content blockquote {
+  border-left: 2px solid var(--primary-container);
+  padding-left: 1.5rem;
+  margin: 2.5rem 0;
+  font-style: italic;
+  font-size: 1.25rem;
+  color: var(--on-surface);
+  background: rgba(0, 240, 255, 0.03);
+  padding: 1.5rem;
+  border-radius: 0 8px 8px 0;
+}
+
+.post-content img {
+  width: 100%;
+  border-radius: 8px;
+  margin: 2rem 0;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.post-content code {
+  font-family: monospace;
+  background: rgba(255,255,255,0.05);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  color: var(--secondary);
+}
+
+/* Tags Footer */
+.post-footer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.post-footer-tags .tag-pill {
+  font-size: 0.7rem;
+  padding: 0.4rem 1rem;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+@keyframes scaleDown {
+  from { transform: scale(1.1); }
+  to { transform: scale(1); }
+}

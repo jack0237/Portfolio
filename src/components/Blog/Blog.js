@@ -1,18 +1,156 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Container } from "react-bootstrap";
 import blogImg1 from "../../Assets/blog-img-1.jpg";
 import blogImg2 from "../../Assets/blog-img-2.jpg";
 import blogImg3 from "../../Assets/blog-img-3.jpg";
+import { Link } from "react-router-dom";
+import { fetchCollection, INITIAL_BLOG_POSTS } from "../../utils/storage";
 import "./Blog.css";
 
+const imgMap = {
+  blogImg1,
+  blogImg2,
+  blogImg3
+};
+
 function Blog() {
+  const [blogs, setBlogs] = useState([]);
+
+  useEffect(() => {
+    fetchCollection("blogs", INITIAL_BLOG_POSTS).then(data => {
+      setBlogs(data);
+    });
+  }, []);
+
+  const renderCard = (post, i) => {
+    const cardType = i % 6; // To mimic the 6 variations in their HTML
+
+    if (cardType === 0) {
+      // Featured Card (Large)
+      return (
+        <article key={post.id} className="post-card glass-card group">
+          <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none' }}>
+            <div className="post-card-img-wrap aspect-4-5">
+              {post.image && (
+                <img src={post.image.startsWith("http") ? post.image : imgMap[post.image]} alt={post.title} className="post-card-img featured-img" />
+              )}
+              <div className="post-card-gradient-overlay"></div>
+              <div className="post-card-tag-wrapper">
+                <span className="post-card-tag">{post.eyebrow || "Research"}</span>
+              </div>
+            </div>
+            <div className="post-card-content flex-col gap-4">
+              <div className="post-meta-line space-between">
+                <span>{post.date}</span>
+                <span>{post.readTime || "08 MIN READ"}</span>
+              </div>
+              <h3 className="post-title featured-title">{post.title}</h3>
+              <p className="post-excerpt">{post.content.length > 120 ? post.content.substring(0, 120) + "..." : post.content}</p>
+              <div className="post-cta featured-cta">
+                Access Log 
+                <span className="material-symbols-outlined cta-icon">arrow_forward</span>
+              </div>
+            </div>
+          </Link>
+        </article>
+      );
+    } else if (cardType === 1) {
+      // Standard Text Card
+      return (
+        <article key={post.id} className="post-card glass-card group">
+          <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none' }}>
+            <div className="post-card-content border-b-content">
+              <div className="status-row mb-4">
+                <span className="status-dot"></span>
+                <span className="status-text">{post.eyebrow || "System Status"}</span>
+              </div>
+              <h3 className="post-title standard-title mb-4">{post.title}</h3>
+              <div className="post-meta-line">{post.date}</div>
+            </div>
+            <div className="post-card-content">
+              <p className="post-excerpt mb-6">{post.content.length > 120 ? post.content.substring(0, 120) + "..." : post.content}</p>
+              <div className="tags-row">
+                <span className="style-tag">#NODE</span>
+                <span className="style-tag">#DEVLOG</span>
+              </div>
+            </div>
+          </Link>
+        </article>
+      );
+    } else if (cardType === 2) {
+      // Image Card (Aspect Video)
+      return (
+        <article key={post.id} className="post-card glass-card group">
+          <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none' }}>
+            <div className="post-card-img-wrap aspect-video">
+              {post.image && (
+                <img src={post.image.startsWith("http") ? post.image : imgMap[post.image]} alt={post.title} className="post-card-img hover-scale-105" />
+              )}
+            </div>
+            <div className="post-card-content flex-col gap-4">
+              <div className="post-meta-line"><span>{post.date}</span></div>
+              <h3 className="post-title standard-title">{post.title}</h3>
+              <p className="post-excerpt">{post.content.length > 80 ? post.content.substring(0, 80) + "..." : post.content}</p>
+            </div>
+          </Link>
+        </article>
+      );
+    } else if (cardType === 3) {
+      // Quote/Typography Card
+      return (
+        <article key={post.id} className="post-card quote-card group">
+          <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none' }}>
+            <span className="material-symbols-outlined quote-icon" style={{ fontVariationSettings: "'FILL' 1" }}>terminal</span>
+            <p className="quote-text">"{post.content.length > 100 ? post.content.substring(0, 100) + "..." : post.content}"</p>
+            <div className="quote-divider"></div>
+            <span className="quote-author">Fragment {post.id.substring(0,5).toUpperCase()}</span>
+          </Link>
+        </article>
+      );
+    } else if (cardType === 4) {
+      // Image Card (Aspect Square + Grayscale Hover)
+      return (
+        <article key={post.id} className="post-card glass-card group">
+          <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none' }}>
+            <div className="post-card-img-wrap aspect-square">
+              {post.image && (
+                <img src={post.image.startsWith("http") ? post.image : imgMap[post.image]} alt={post.title} className="post-card-img grayscale-hover" />
+              )}
+            </div>
+            <div className="post-card-content flex-col gap-4">
+              <div className="post-meta-line">{post.date}</div>
+              <h3 className="post-title standard-title">{post.title}</h3>
+              <p className="post-excerpt">{post.content.length > 80 ? post.content.substring(0, 80) + "..." : post.content}</p>
+              <div className="read-discussion-link mt-2">Read Discussion</div>
+            </div>
+          </Link>
+        </article>
+      );
+    } else {
+      // Simple List Card
+      return (
+        <article key={post.id} className="post-card glass-card p-8 group">
+          <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none' }}>
+            <h3 className="list-card-title mb-8">System Archives</h3>
+            <div className="space-y-6">
+              <div className="list-item-block">
+                <span className="list-item-text">{post.title}</span>
+                <span className="list-item-date">{post.date.substring(post.date.length - 4) || "2024"}</span>
+              </div>
+            </div>
+          </Link>
+        </article>
+      );
+    }
+  };
+
   return (
     <div className="blog-page">
       <Container style={{ maxWidth: "1200px" }}>
         {/* Hero Header */}
         <header className="blog-header">
           <h1 className="blog-title-bg">LOGS</h1>
-          <div className="position-relative z-index-10 d-flex flex-column gap-3">
+          <div className="blog-header-content">
             <span className="blog-eyebrow">System Intel / Journal</span>
             <h2 className="blog-title">
               ENCRYPTED <br />
@@ -26,116 +164,8 @@ function Blog() {
         </header>
 
         {/* Masonry Grid Area */}
-        <div className="blog-masonry">
-          
-          {/* Featured Card (Large image, portrait) */}
-          <article className="post-card">
-            <a href="#article" style={{ textDecoration: 'none' }}>
-              <div className="post-card-img-wrap">
-                <img src={blogImg1} alt="Abstract digital geometry" className="post-card-img" />
-                <div className="post-card-img-overlay" />
-                <div className="post-card-img-tag">Research</div>
-              </div>
-              <div className="post-card-content">
-                <div className="post-meta-line">
-                  <span>OCT 24, 2024</span>
-                  <span>08 MIN READ</span>
-                </div>
-                <h3 className="post-title primary">THE NEURAL AESTHETIC: DECODING AI DESIGN</h3>
-                <p className="post-excerpt">
-                  Analyzing how generative models are reshaping our understanding of traditional composition and visual balance.
-                </p>
-                <div className="post-cta">
-                  Access Log
-                  <span className="material-symbols-outlined">arrow_forward</span>
-                </div>
-              </div>
-            </a>
-          </article>
-
-          {/* Standard Text Card */}
-          <article className="post-card">
-            <a href="#article" style={{ textDecoration: 'none' }}>
-              <div className="post-card-content border-b">
-                <div className="status-row">
-                  <span className="status-dot"></span>
-                  <span className="status-text">System Status</span>
-                </div>
-                <h3 className="post-title">MIGRATING TO THE VOID: INFRASTRUCTURE UPDATES</h3>
-                <div className="post-meta-line" style={{ justifyContent: 'flex-start' }}>SEP 12, 2024</div>
-              </div>
-              <div className="post-card-content" style={{ paddingTop: '2rem' }}>
-                <p className="post-excerpt mb-4">
-                  Transitioning backend protocols to decentralized clusters for enhanced data integrity and lower latency.
-                </p>
-                <div className="tags-row">
-                  <span className="tag-pill">#NODE</span>
-                  <span className="tag-pill">#DEVLOG</span>
-                </div>
-              </div>
-            </a>
-          </article>
-
-          {/* Image Card (Landscape video ratio) */}
-          <article className="post-card video-ratio">
-            <a href="#article" style={{ textDecoration: 'none' }}>
-              <div className="post-card-img-wrap">
-                <img src={blogImg2} alt="Cyberpunk architecture" className="post-card-img" />
-              </div>
-              <div className="post-card-content">
-                <div className="post-meta-line" style={{ justifyContent: 'flex-start' }}>SEP 05, 2024</div>
-                <h3 className="post-title" style={{ fontSize: '1.25rem' }}>CYBER-MINIMALISM IN URBAN ENVIRONMENTS</h3>
-                <p className="post-excerpt">Photographic study of light and shadow in the Neo-Tokyo business district.</p>
-              </div>
-            </a>
-          </article>
-
-          {/* Quote Style Card */}
-          <article className="post-card quote-card">
-            <span className="material-symbols-outlined quote-icon">terminal</span>
-            <p className="quote-text">
-              "Complexity is the enemy of clarity. In the void, only the essential survives."
-            </p>
-            <div className="quote-divider"></div>
-            <span className="quote-author">Fragment 0x4F2</span>
-          </article>
-
-          {/* Image Card Grayscale (Square ratio) */}
-          <article className="post-card square-ratio">
-            <a href="#article" style={{ textDecoration: 'none' }}>
-              <div className="post-card-img-wrap">
-                <img src={blogImg3} alt="React code on screen" className="post-card-img grayscale" />
-              </div>
-              <div className="post-card-content">
-                <div className="post-meta-line" style={{ justifyContent: 'flex-start' }}>AUG 28, 2024</div>
-                <h3 className="post-title" style={{ fontSize: '1.25rem' }}>BEYOND PIXELS: THE SPATIAL WEB</h3>
-                <p className="post-excerpt">How WebXR is transforming 2D interfaces into immersive 3D canvases.</p>
-                <div className="post-cta" style={{ marginTop: '0.5rem', opacity: 0.8 }}>
-                  <span style={{ color: 'var(--secondary)' }}>Read Discussion</span>
-                </div>
-              </div>
-            </a>
-          </article>
-
-          {/* Simple List Card */}
-          <article className="post-card list-card">
-            <h3 className="list-title">System Archives</h3>
-            <div className="d-flex flex-column gap-3 mt-4">
-              <div className="list-item">
-                <span className="list-item-title">Digital Craftsmanship</span>
-                <span className="list-item-year">2024</span>
-              </div>
-              <div className="list-item">
-                <span className="list-item-title">The Edge of Reality</span>
-                <span className="list-item-year">2023</span>
-              </div>
-              <div className="list-item">
-                <span className="list-item-title">Liquid Interfaces</span>
-                <span className="list-item-year">2023</span>
-              </div>
-            </div>
-          </article>
-
+        <div className="blog-masonry-container">
+          {blogs.map((post, i) => renderCard(post, i))}
         </div>
 
         {/* Pagination */}

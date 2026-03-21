@@ -98,6 +98,35 @@ button:focus { box-shadow: none !important; outline: none !important; }
 #preloader-none { opacity: 0; }
 #no-scroll { overflow: hidden; height: 100vh; }
 
+/* ─── Page Transitions ─── */
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition {
+  animation: fadeInSlide 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+
+/* ─── Scroll Reveal Animations ─── */
+.reveal-section {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 1s cubic-bezier(0.25, 0.8, 0.25, 1), transform 1s cubic-bezier(0.25, 0.8, 0.25, 1);
+  will-change: opacity, visibility;
+}
+
+.reveal-section.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
 /* ─── Text Effects (from Stitch) ─── */
 .text-outline {
   -webkit-text-stroke: 1px rgba(0, 240, 255, 0.4);

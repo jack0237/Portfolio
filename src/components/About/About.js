@@ -1,53 +1,117 @@
 import React from "react";
-import { Container, Row, Col } from "react-bootstrap";
-import Particle from "../Particle";
-import Github from "./Github";
-import Techstack from "./Techstack";
-import Aboutcard from "./AboutCard";
+import { Container } from "react-bootstrap";
 import laptopImg from "../../Assets/about.png";
-import Toolstack from "./Toolstack";
+import "./About.css";
+
+// Icons 
+import { CgCPlusPlus } from "react-icons/cg";
+import {
+  DiJavascript1,
+  DiReact,
+  DiNodejs,
+  DiMongodb,
+  DiPython,
+  DiGit,
+  DiJava,
+} from "react-icons/di";
+import {
+  SiRedis,
+  SiFirebase,
+  SiNextdotjs,
+  SiSolidity,
+  SiPostgresql,
+} from "react-icons/si";
+import { TbBrandGolang } from "react-icons/tb";
 
 function About() {
+  const techStack = [
+    { icon: <CgCPlusPlus />, name: "C++" },
+    { icon: <DiJavascript1 />, name: "JavaScript" },
+    { icon: <TbBrandGolang />, name: "Go" },
+    { icon: <DiNodejs />, name: "Node.js" },
+    { icon: <DiReact />, name: "React" },
+    { icon: <SiSolidity />, name: "Solidity" },
+    { icon: <DiMongodb />, name: "MongoDB" },
+    { icon: <SiNextdotjs />, name: "Next.js" },
+    { icon: <DiGit />, name: "Git" },
+    { icon: <SiFirebase />, name: "Firebase" },
+    { icon: <SiRedis />, name: "Redis" },
+    { icon: <SiPostgresql />, name: "PostgreSQL" },
+    { icon: <DiPython />, name: "Python" },
+    { icon: <DiJava />, name: "Java" },
+  ];
+
   return (
-    <Container fluid className="about-section">
-      <Particle />
+    <section className="about-page page-transition">
+      <div className="about-glow"></div>
+      <div className="about-bento"></div>
+
       <Container>
-        <Row style={{ justifyContent: "center", padding: "10px" }}>
-          <Col
-            md={7}
-            style={{
-              justifyContent: "center",
-              paddingTop: "30px",
-              paddingBottom: "50px",
-            }}
-          >
-            <h1 style={{ fontSize: "2.1em", paddingBottom: "20px" }}>
-              Know Who <strong className="purple">I'M</strong>
+        <div className="about-split-grid">
+          {/* Left Column: Hologram Portrait */}
+          <div className="about-hologram-col">
+            <div className="hologram-wrapper">
+              <div 
+                className="hologram-base" 
+                style={{ backgroundImage: `url(${laptopImg})` }}
+              ></div>
+              <div 
+                className="hologram-glitch-1" 
+                style={{ backgroundImage: `url(${laptopImg})` }}
+              ></div>
+              <div 
+                className="hologram-glitch-2" 
+                style={{ backgroundImage: `url(${laptopImg})` }}
+              ></div>
+              <div className="hologram-scanline"></div>
+            </div>
+          </div>
+
+          {/* Right Column: Bio */}
+          <div className="about-bio-col">
+            <span className="about-eyebrow">Identity Hub</span>
+            <h1 className="about-title">
+              DESIGN <br />
+              <span className="accent-text">ENGINEER</span>
             </h1>
-            <Aboutcard />
-          </Col>
-          <Col
-            md={5}
-            style={{ paddingTop: "120px", paddingBottom: "50px" }}
-            className="about-img"
-          >
-            <img src={laptopImg} alt="about" className="img-fluid" />
-          </Col>
-        </Row>
-        <h1 className="project-heading">
-          Professional <strong className="purple">Skillset </strong>
-        </h1>
+            <p className="about-text">
+              Bridging the gap between hyper-aesthetic interfaces and robust system architectures. I build digital experiences that operate flawlessly in the background while commanding attention in the foreground.
+            </p>
+            <p className="about-text">
+              Whether integrating decentralized protocols or orchestrating complex state across modern frameworks, the goal remains the same: Absolute precision.
+            </p>
 
-        <Techstack />
-
-        <h1 className="project-heading">
-          <strong className="purple">Tools</strong> I use
-        </h1>
-        <Toolstack />
-
-        {/* <Github /> */}
+            <div className="about-stats">
+              <div className="stat-item">
+                <span className="stat-number">4+</span>
+                <span className="stat-label">Years Uptime</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">80+</span>
+                <span className="stat-label">Deployments</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-number">100%</span>
+                <span className="stat-label">Cyber-Aesthetic</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </Container>
-    </Container>
+
+      {/* Full Bleed Marquee */}
+      <div className="marquee-container">
+        <div className="marquee-content">
+          {/* We render the stack twice to create the seamless loop effect perfectly */}
+          {[...techStack, ...techStack].map((tech, index) => (
+            <div className="marquee-icon-wrap" key={index}>
+              {tech.icon}
+              <span className="marquee-icon-name">{tech.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

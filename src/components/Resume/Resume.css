@@ -1,0 +1,262 @@
+/* ===================================================
+   RESUME PAGE — Data Terminal & Timeline
+   =================================================== */
+
+.resume-page {
+  min-height: 100vh;
+  padding-top: 140px;
+  padding-bottom: 100px;
+  background: var(--background);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background Scanlines */
+.resume-scanlines {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(0, 240, 255, 0.02) 51%,
+    transparent 51%
+  );
+  background-size: 100% 4px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.resume-container {
+  position: relative;
+  z-index: 10;
+}
+
+/* --- Scanning Download Button --- */
+.resume-download-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4rem;
+}
+
+.scan-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  padding: 1rem 2.5rem;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--on-surface);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  border-radius: 8px;
+  overflow: hidden;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.scan-btn:hover {
+  color: var(--background);
+  background: var(--on-surface);
+  border-color: var(--primary-container);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+}
+
+.scan-btn-icon {
+  font-size: 1.25rem;
+}
+
+/* The scanning light beam */
+.scan-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -20%;
+  width: 25px;
+  height: 200%;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(0, 240, 255, 0.8) 50%,
+    transparent 100%
+  );
+  transform: rotate(25deg);
+  animation: scanSweep 3s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+@keyframes scanSweep {
+  0% { left: -30%; opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { left: 120%; opacity: 0; }
+}
+
+/* --- Section Headers --- */
+.resume-section-header {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.resume-section-header::after {
+  content: '';
+  flex-grow: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(0, 240, 255, 0.3), transparent);
+}
+
+/* --- Vertical Timeline --- */
+.timeline-wrapper {
+  position: relative;
+  margin-left: 1rem;
+  padding-left: 3rem;
+  border-left: 2px solid rgba(0, 240, 255, 0.15);
+  margin-bottom: 5rem;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 3rem;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Glowing Pulse Line Dot */
+.timeline-dot {
+  position: absolute;
+  left: -3.45rem; /* center on the border */
+  top: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--primary-container);
+  box-shadow: 0 0 10px var(--primary-container);
+  animation: glowPulse 2s infinite;
+}
+
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 5px var(--primary-container), 0 0 0 0 rgba(0, 240, 255, 0.4); }
+  70% { box-shadow: 0 0 15px var(--primary-container), 0 0 0 15px rgba(0, 240, 255, 0); }
+  100% { box-shadow: 0 0 5px var(--primary-container), 0 0 0 0 rgba(0, 240, 255, 0); }
+}
+
+/* Experience Card */
+.experience-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.experience-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(0, 240, 255, 0.2);
+}
+
+.exp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.exp-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--on-surface);
+  line-height: 1.2;
+}
+
+.exp-company {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.1rem;
+  color: var(--secondary);
+  margin-top: 0.5rem;
+}
+
+.exp-date {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: var(--on-surface-variant);
+  background: rgba(0,0,0,0.3);
+  padding: 0.3rem 0.8rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+@media (max-width: 768px) {
+  .exp-header { flex-direction: column; gap: 1rem; }
+}
+
+.exp-desc {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--on-surface-variant);
+}
+
+/* --- Skills Visualization (Dot-Matrix) --- */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.skill-matrix-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.skill-matrix-item:hover {
+  border-color: rgba(0, 240, 255, 0.2);
+  background: rgba(0, 240, 255, 0.02);
+}
+
+.skill-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.1rem;
+  color: var(--on-surface);
+}
+
+.dot-matrix {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.skill-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.skill-dot.active {
+  background: var(--primary-container);
+  box-shadow: 0 0 8px var(--primary-container);
+}
+
+.skill-dot.inactive {
+  background: rgba(255, 255, 255, 0.1);
+}

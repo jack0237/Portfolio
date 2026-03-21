@@ -1,0 +1,218 @@
+/* ===================================================
+   PROJECTS PAGE — 3D Tilted Grid & Filters
+   =================================================== */
+
+.projects-page {
+  min-height: 100vh;
+  padding-top: 140px;
+  padding-bottom: 100px;
+  position: relative;
+  background: var(--background);
+}
+
+/* Background Elements */
+.projects-glow {
+  position: fixed;
+  top: 20%;
+  right: -10%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, rgba(87,27,193,0.06) 0%, transparent 60%);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* --- Filter Bar --- */
+.filter-bar-wrapper {
+  position: sticky;
+  top: 100px;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4rem;
+  pointer-events: none; /* Allows clicking through the wrapper */
+}
+
+.filter-bar {
+  display: inline-flex;
+  gap: 0.5rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  padding: 0.5rem;
+  border-radius: 9999px;
+  pointer-events: auto; /* Re-enable clicks for the bar itself */
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.filter-btn {
+  background: transparent;
+  border: none;
+  color: var(--on-surface-variant);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.6rem 1.5rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-btn:hover {
+  color: var(--on-surface);
+  background: rgba(255,255,255,0.05);
+}
+
+.filter-btn.active {
+  color: var(--background);
+  background: var(--primary-container);
+  font-weight: 600;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+}
+
+/* --- 3D Grid System --- */
+.project-3d-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 3rem;
+  padding: 0 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  perspective: 1200px;
+  position: relative;
+  z-index: 10;
+}
+
+/* 3D Tilted Card */
+.project-card-3d {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transform-style: preserve-3d;
+  /* Default tilted state */
+  transform: rotateX(8deg) rotateY(-4deg) translateZ(0);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+  text-decoration: none;
+  min-height: 480px;
+}
+
+.project-card-3d:hover {
+  /* Flatten and pop up on hover */
+  transform: rotateX(0deg) rotateY(0deg) translateZ(30px) translateY(-10px);
+  border-color: var(--primary-container);
+  box-shadow: 
+    0 25px 40px rgba(0,0,0,0.6),
+    0 0 20px rgba(0, 240, 255, 0.2),
+    inset 0 0 10px rgba(0, 240, 255, 0.1);
+}
+
+/* Inner elements */
+.project-img-wrapper {
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  position: relative;
+}
+
+.project-img-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+  filter: grayscale(40%);
+}
+
+.project-card-3d:hover .project-img-wrapper img {
+  transform: scale(1.08);
+  filter: grayscale(0%);
+}
+
+.project-img-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, var(--background), transparent);
+  opacity: 0.8;
+}
+
+/* Content */
+.project-content {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.project-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--on-surface);
+  margin-bottom: 1rem;
+}
+
+.project-desc {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--on-surface-variant);
+  margin-bottom: 2rem;
+  flex-grow: 1;
+}
+
+/* Tech Tags */
+.project-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.project-tag {
+  font-family: monospace; /* Monospace tech tags as requested */
+  font-size: 0.75rem;
+  color: var(--primary);
+  background: rgba(0, 240, 255, 0.05);
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 240, 255, 0.1);
+}
+
+/* Action Button */
+.project-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  color: var(--on-surface);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+}
+
+.project-card-3d:hover .project-action-btn {
+  background: rgba(0, 240, 255, 0.05);
+  border-color: rgba(0, 240, 255, 0.3);
+  color: var(--primary-container);
+}
+
+.project-action-btn .material-symbols-outlined {
+  font-size: 1.25rem;
+  transition: transform 0.3s ease;
+}
+
+.project-card-3d:hover .project-action-btn .material-symbols-outlined {
+  transform: translateX(4px);
+}

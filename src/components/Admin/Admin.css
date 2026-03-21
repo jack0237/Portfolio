@@ -1,0 +1,176 @@
+/* ===================================================
+   ADMIN DASHBOARD CSS
+   =================================================== */
+
+.admin-login-box {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  padding: 3rem;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  text-align: center;
+}
+
+.admin-heading {
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--primary);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.admin-input {
+  background: rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: var(--on-surface) !important;
+  font-family: monospace;
+  transition: all 0.3s ease;
+}
+
+.admin-input:focus {
+  border-color: var(--primary-container) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2) !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+}
+
+.admin-btn {
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: var(--primary-container);
+  font-family: 'Space Grotesk', sans-serif;
+  padding: 0.5rem 1.5rem;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.admin-btn:hover {
+  background: var(--primary-container);
+  color: var(--background);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
+}
+
+.admin-btn-logout {
+  background: transparent;
+  border: 1px solid var(--error);
+  color: var(--error);
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-family: 'Space Grotesk', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.admin-btn-logout:hover {
+  background: var(--error);
+  color: var(--background);
+}
+
+.admin-btn-danger {
+  background: transparent;
+  border: 1px solid rgba(255, 80, 80, 0.4);
+  color: rgba(255, 80, 80, 0.9);
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+}
+
+.admin-btn-danger:hover {
+  background: rgba(255, 80, 80, 0.2);
+  border-color: rgba(255, 80, 80, 0.8);
+  color: var(--on-surface);
+}
+
+.admin-main-title {
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--on-surface);
+  font-weight: 700;
+  font-size: 2.5rem;
+  margin: 0;
+}
+
+/* Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 1rem;
+}
+
+.admin-tab {
+  background: transparent;
+  border: none;
+  color: var(--on-surface-variant);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.admin-tab:hover {
+  color: var(--on-surface);
+}
+
+.admin-tab.active {
+  color: var(--primary-container);
+  font-weight: 700;
+}
+
+.admin-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1rem;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--primary-container);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+}
+
+/* Content Container */
+.admin-content-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 12px;
+  padding: 2rem;
+  min-height: 500px;
+}
+
+.admin-item-block {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-radius: 8px;
+}
+
+.admin-section-title {
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--on-surface);
+  font-weight: 600;
+  margin: 0;
+}
+
+.admin-table {
+  background: transparent !important;
+  color: var(--on-surface) !important;
+}
+
+.admin-table th {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: monospace;
+  color: var(--primary-container);
+}
+
+.admin-table td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  vertical-align: middle;
+}

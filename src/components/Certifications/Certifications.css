@@ -1,0 +1,178 @@
+/* ===================================================
+   CERTIFICATIONS PAGE
+   =================================================== */
+
+.certifications-page {
+  min-height: 100vh;
+  padding-top: 150px;
+  padding-bottom: 100px;
+  background-color: var(--background);
+  position: relative;
+  overflow: hidden;
+}
+
+.cert-bg-noise {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.cert-container {
+  position: relative;
+  z-index: 10;
+  max-width: 1100px;
+}
+
+.cert-header {
+  margin-bottom: 5rem;
+  text-align: center;
+}
+
+.cert-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 700;
+  color: var(--on-surface);
+  text-transform: uppercase;
+  letter-spacing: -1px;
+}
+
+.cert-title .accent-text {
+  color: var(--primary-container);
+}
+
+.cert-subtitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  color: var(--on-surface-variant);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-top: 1rem;
+}
+
+.cert-section-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--on-surface);
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  letter-spacing: 0.05em;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.status-dot.completed {
+  background-color: var(--neon-cyan);
+  box-shadow: 0 0 10px var(--neon-cyan);
+}
+.status-dot.ongoing {
+  background-color: #f39c12;
+  box-shadow: 0 0 10px #f39c12;
+}
+
+/* CARDS */
+.cert-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 12px;
+  padding: 2rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cert-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(0, 240, 255, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 240, 255, 0.05);
+}
+
+.cert-card.ongoing-card:hover {
+  border-color: rgba(243, 156, 18, 0.3);
+  box-shadow: 0 10px 30px rgba(243, 156, 18, 0.05);
+}
+
+.cert-icon-wrap {
+  width: 48px;
+  height: 48px;
+  background: rgba(0, 240, 255, 0.1);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+.cert-icon-wrap.ongoing {
+  background: rgba(243, 156, 18, 0.1);
+}
+
+.cert-icon {
+  font-size: 1.5rem;
+  color: var(--neon-cyan);
+}
+.cert-icon-wrap.ongoing .cert-icon {
+  color: #f39c12;
+}
+
+.cert-name {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--on-surface);
+  line-height: 1.3;
+  margin-bottom: 0.5rem;
+}
+
+.cert-issuer {
+  font-family: 'Manrope', sans-serif;
+  font-size: 0.95rem;
+  color: var(--on-surface-variant);
+  margin-bottom: 1.5rem;
+}
+
+.cert-meta {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.8rem;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 1rem;
+}
+
+.cert-date {
+  color: var(--on-surface-variant);
+  letter-spacing: 0.1em;
+}
+.text-warning {
+  color: #f39c12 !important;
+}
+
+.cert-link {
+  color: var(--neon-cyan);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: all 0.2s;
+  letter-spacing: 0.05em;
+}
+.cert-link:hover {
+  color: #fff;
+}

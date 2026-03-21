@@ -50,13 +50,15 @@ function NavBar() {
           >
             About
           </a>
-          <a
-            href="#projects"
-            onClick={(e) => handleNavigation(e, "projects")}
-            className="curator-nav-link"
+          <Link
+            to="/projects"
+            onClick={() => updateExpanded(false)}
+            className={`curator-nav-link ${
+              location.pathname === "/projects" ? "active" : ""
+            }`}
           >
             Projects
-          </a>
+          </Link>
           <Link
             to="/resume"
             onClick={() => updateExpanded(false)}
@@ -65,6 +67,15 @@ function NavBar() {
             }`}
           >
             Resume
+          </Link>
+          <Link
+            to="/certifications"
+            onClick={() => updateExpanded(false)}
+            className={`curator-nav-link ${
+              location.pathname === "/certifications" ? "active" : ""
+            }`}
+          >
+            Certifications
           </Link>
           <Link
             to="/blog"
@@ -117,13 +128,13 @@ function NavBar() {
           >
             About
           </a>
-          <a
-            href="#projects"
-            onClick={(e) => handleNavigation(e, "projects")}
+          <Link
+            to="/projects"
+            onClick={() => updateExpanded(false)}
             className="curator-nav-link"
           >
             Projects
-          </a>
+          </Link>
           <Link
             to="/resume"
             onClick={() => updateExpanded(false)}

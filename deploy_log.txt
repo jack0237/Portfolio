@@ -1,0 +1,7 @@
+
+[1m[37m===[39m Deploying to 'porfolio-ca5ba'...[22m
+
+[36m[1mi [22m[39m deploying [1mstorage, firestore[22m
+[36m[1mi  storage:[22m[39m ensuring required API [1mfirebasestorage.googleapis.com[22m is enabled...
+
+[1m[31mError:[39m[22m Could not find rules for the following storage targets: rules

@@ -1,11 +1,11 @@
 import React from "react";
-import Home2 from "./Home2";
+import { Link } from "react-router-dom";
 import About from "../About/About";
-import Projects from "../Projects/Projects";
+import ScrollReveal from "../ScrollReveal";
 
 function Home() {
   return (
-    <section>
+    <section className="page-transition">
       {/* ─── NEW HERO SECTION (from Stitch HTML) ─── */}
       <section className="hero-section" id="home">
         {/* Background Visuals */}
@@ -39,13 +39,13 @@ function Home() {
 
           {/* CTAs */}
           <div className="hero-cta-group">
-            <a href="#projects" className="hero-cta-primary">
+            <Link to="/projects" className="hero-cta-primary">
               View My Work
-            </a>
-            <a href="/blog" className="hero-cta-secondary">
+            </Link>
+            <Link to="/blog" className="hero-cta-secondary">
               Enter the archives
               <span className="material-symbols-outlined">arrow_forward</span>
-            </a>
+            </Link>
           </div>
         </div>
 
@@ -56,15 +56,11 @@ function Home() {
         </div>
       </section>
 
-      {/* About Section */}
+      {/* ─── ABOUT SECTION (Combined on scroll) ─── */}
       <div id="about">
-        <Home2 />
-        <About />
-      </div>
-
-      {/* Projects Section */}
-      <div id="projects">
-        <Projects />
+        <ScrollReveal>
+          <About />
+        </ScrollReveal>
       </div>
     </section>
   );
