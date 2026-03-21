@@ -3,6 +3,7 @@ import Preloader from "../src/components/Pre";
 import Navbar from "./components/Navbar";
 import Home from "./components/Home/Home";
 import Resume from "./components/Resume/ResumeNew";
+import Blog from "./components/Blog/Blog";
 import {
   BrowserRouter as Router,
   Route,
@@ -35,6 +36,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/resume" element={<Resume />} />
+          <Route path="/blog" element={<Blog />} />
           <Route path="*" element={<Navigate to="/"/>} />
         </Routes>
         <Footer />
