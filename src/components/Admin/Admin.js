@@ -11,11 +11,15 @@ import {
   INITIAL_RESUME_SKILLS,
   INITIAL_CERTIFICATIONS
 } from "../../utils/storage";
+import { auth } from "../../utils/firebase";
+import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
 import "./Admin.css";
 
+const ADMIN_EMAIL = "jasonngueguim@gmail.com";
+
 function Admin() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [passcode, setPasscode] = useState("");
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("blog"); // 'blog', 'resume', 'skills'
 
   // Data states
@@ -24,40 +28,69 @@ function Admin() {
   const [skills, setSkills] = useState([]);
   const [certifications, setCertifications] = useState([]);
 
+  // Local state for tag inputs to fix the "comma bug"
+  const [blogTagInputs, setBlogTagInputs] = useState({});
+  const [allExistingTags, setAllExistingTags] = useState([]);
+
   useEffect(() => {
-    if (localStorage.getItem("admin_auth") === "true") {
-      setIsAuthenticated(true);
-      loadAdminData();
-    }
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser && currentUser.email === ADMIN_EMAIL) {
+        setUser(currentUser);
+        loadAdminData();
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const loadAdminData = async () => {
-    setBlogs(await fetchCollection("blogs", INITIAL_BLOG_POSTS));
+    const blogData = await fetchCollection("blogs", INITIAL_BLOG_POSTS);
+    setBlogs(blogData);
     setExperiences(await fetchCollection("experiences", INITIAL_RESUME_EXPERIENCE));
     setSkills(await fetchCollection("skills", INITIAL_RESUME_SKILLS));
     setCertifications(await fetchCollection("certifications", INITIAL_CERTIFICATIONS));
+
+    // Initialize tag inputs and history
+    const tagMap = {};
+    const tagsSet = new Set();
+    blogData.forEach(blog => {
+      tagMap[blog.id] = (blog.tags || []).join(", ");
+      if (blog.tags) blog.tags.forEach(t => tagsSet.add(t));
+    });
+    setBlogTagInputs(tagMap);
+    setAllExistingTags(Array.from(tagsSet).sort());
   };
 
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (passcode === "cortex" || passcode === "admin") {
-      setIsAuthenticated(true);
-      localStorage.setItem("admin_auth", "true");
-      loadAdminData();
-    } else {
-      alert("Invalid Access Code");
+  const handleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      if (result.user.email !== ADMIN_EMAIL) {
+        await signOut(auth);
+        alert("Unauthorized Access: This terminal is restricted to the system administrator.");
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+      alert("Login failed. Please try again.");
     }
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem("admin_auth");
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   // Adding generic items (local state only, saved remotely upon SAVE button press)
   const addBlog = () => {
-    const newBlog = { id: Date.now().toString(), title: "NEW ENTRY", date: "TODAY", readTime: "0 MIN", eyebrow: "Category", image: "", content: "New Content..." };
+    const newBlog = { id: Date.now().toString(), title: "NEW ENTRY", date: "TODAY", readTime: "0 MIN", eyebrow: "Category", image: "", content: "New Content...", tags: ["#RESEARCH"] };
     setBlogs([newBlog, ...blogs]);
   };
   const addExperience = () => {
@@ -94,6 +127,28 @@ function Admin() {
   // Update local state without pushing to DB yet
   const updateBlogLocal = (id, field, value) => {
     setBlogs(blogs.map(b => (b.id === id ? { ...b, [field]: value } : b)));
+  };
+
+  const handleBlogTagChange = (id, value) => {
+    const upperValue = value.toUpperCase();
+    // Update the visual input string immediately in uppercase
+    setBlogTagInputs(prev => ({ ...prev, [id]: upperValue }));
+
+    // Update the actual blog object tags array
+    const tagsArray = upperValue.split(',')
+      .map(tag => {
+        let t = tag.trim();
+        if (t && !t.startsWith('#')) t = '#' + t;
+        return t; // Already uppercased above
+      })
+      .filter(t => t !== "");
+    
+    updateBlogLocal(id, "tags", tagsArray);
+
+    // Refresh history suggestions based on current tags in all blogs
+    const tagsSet = new Set(allExistingTags);
+    tagsArray.forEach(t => tagsSet.add(t));
+    setAllExistingTags(Array.from(tagsSet).sort());
   };
 
   const handleImageUpload = async (e, blogId) => {
@@ -138,27 +193,27 @@ function Admin() {
   };
 
 
-  if (!isAuthenticated) {
+  if (loading) {
+    return (
+      <div className="admin-login-page page-transition d-flex justify-content-center align-items-center" style={{ minHeight: "80vh" }}>
+        <h2 className="admin-heading">VERIFYING CREDENTIALS...</h2>
+      </div>
+    );
+  }
+
+  if (!user) {
     return (
       <div className="admin-login-page page-transition">
         <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: "80vh" }}>
           <div className="admin-login-box">
             <h2 className="admin-heading mb-4">SYSTEM ADMIN TERMINAL</h2>
-            <Form onSubmit={handleLogin}>
-              <Form.Group className="mb-3">
-                <Form.Label>ACCESS CODE</Form.Label>
-                <Form.Control 
-                  type="password" 
-                  placeholder="Enter passcode..." 
-                  value={passcode}
-                  onChange={(e) => setPasscode(e.target.value)}
-                  className="admin-input"
-                />
-              </Form.Group>
-              <Button type="submit" className="admin-btn mt-2 w-100">
-                INITIALIZE CONNECTION
-              </Button>
-            </Form>
+            <p className="text-muted mb-4 text-center">ACCESS RESTRICTED TO SYSTEM ADMINISTRATOR ONLY</p>
+            <Button onClick={handleLogin} className="admin-btn mt-2 w-100 d-flex align-items-center justify-content-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-google" viewBox="0 0 16 16">
+                <path d="M15.545 6.558a9.42 9.42 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0c2.158 0 3.92.737 5.358 2.138l-2.851 2.851C9.747 4.221 8.993 3.999 8 3.999c-1.934 0-3.583 1.309-4.169 3.08a4.99 4.99 0 0 0 0 3.839c.586 1.771 2.235 3.08 4.169 3.08 1.133 0 2.091-.3 2.768-.813.79-.597 1.305-1.464 1.458-2.583H8.001V6.558h7.544z"/>
+              </svg>
+              INITIALIZE GOOGLE CONNECTION
+            </Button>
           </div>
         </Container>
       </div>
@@ -171,7 +226,10 @@ function Admin() {
         
         <div className="d-flex justify-content-between align-items-center mb-5">
           <h1 className="admin-main-title">COMMAND <span className="accent-text">CENTER</span></h1>
-          <button className="admin-btn-logout" onClick={handleLogout}>TERMINATE SESSION</button>
+          <div className="d-flex align-items-center gap-3">
+             <span className="text-muted" style={{fontSize: '0.8rem'}}>ADMIN: {user.email}</span>
+             <button className="admin-btn-logout" onClick={handleLogout}>TERMINATE SESSION</button>
+          </div>
         </div>
 
         {/* Tab Navigation */}
@@ -211,6 +269,26 @@ function Admin() {
                       <Form.Group className="mb-2">
                         <Form.Label>Category/Eyebrow</Form.Label>
                         <Form.Control type="text" value={blog.eyebrow} onChange={(e) => updateBlogLocal(blog.id, "eyebrow", e.target.value)} className="admin-input" />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col md={12}>
+                       <Form.Group className="mb-2">
+                        <Form.Label>Tags (Comma separated, e.g. #AI, #WEB3)</Form.Label>
+                        <Form.Control 
+                          type="text" 
+                          list="tag-history"
+                          value={blogTagInputs[blog.id] || ""} 
+                          onChange={(e) => handleBlogTagChange(blog.id, e.target.value)} 
+                          className="admin-input" 
+                          placeholder="#RESEARCH, #DESIGN, #AI"
+                        />
+                        <datalist id="tag-history">
+                          {allExistingTags.map((tag, idx) => (
+                            <option key={idx} value={tag} />
+                          ))}
+                        </datalist>
                       </Form.Group>
                     </Col>
                   </Row>

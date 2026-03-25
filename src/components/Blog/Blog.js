@@ -70,8 +70,9 @@ function Blog() {
             <div className="post-card-content">
               <p className="post-excerpt mb-6">{post.content.length > 120 ? post.content.substring(0, 120) + "..." : post.content}</p>
               <div className="tags-row">
-                <span className="style-tag">#NODE</span>
-                <span className="style-tag">#DEVLOG</span>
+                {(post.tags || ["#RESEARCH", "#DEVLOG"]).map((tag, idx) => (
+                  <span key={idx} className="style-tag">{tag}</span>
+                ))}
               </div>
             </div>
           </Link>

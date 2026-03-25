@@ -67,12 +67,14 @@ function BlogPost() {
               {post.content}
             </ReactMarkdown>
             
-            {/* Tags (if we added dynamic tags later) */}
-            <div className="post-footer-tags">
-              <span className="tag-pill">#RESEARCH</span>
-              <span className="tag-pill">#DESIGN</span>
-              <span className="tag-pill">#AI</span>
-            </div>
+            {/* Tags */}
+            {post.tags && post.tags.length > 0 && (
+              <div className="post-footer-tags">
+                {post.tags.map((tag, index) => (
+                  <span key={index} className="tag-pill">{tag}</span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </Container>
