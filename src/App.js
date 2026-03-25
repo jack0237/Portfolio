@@ -22,8 +22,15 @@ import Footer from "./components/Footer";
 
 function App() {
   const [load, upadateLoad] = useState(true);
+  const [isBlogSubdomain, setIsBlogSubdomain] = useState(false);
 
   useEffect(() => {
+    // Detect if the current hostname starts with 'blog.'
+    const hostname = window.location.hostname;
+    if (hostname.startsWith("blog.") || hostname.includes("blog-subdomain")) {
+      setIsBlogSubdomain(true);
+    }
+
     const timer = setTimeout(() => {
       upadateLoad(false);
     }, 1200);
@@ -38,12 +45,23 @@ function App() {
         <Navbar />
         <ScrollToTop />
         <Routes>
-          <Route path="/" element={<Home />} />
+          {/* Main Route Switch: blog.domain.com shows Blog, otherwise Home */}
+          <Route 
+            path="/" 
+            element={isBlogSubdomain ? <Blog /> : <Home />} 
+          />
+          
           <Route path="/projects" element={<Projects />} />
           <Route path="/resume" element={<Resume />} />
           <Route path="/certifications" element={<Certifications />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:id" element={<BlogPost />} />
+
+          {/* If on blog subdomain, handle blog posts at the root: blog.domain.com/:id */}
+          {isBlogSubdomain && (
+            <Route path="/:id" element={<BlogPost />} />
+          )}
+
           <Route path="/admin" element={<Admin />} />
           <Route path="*" element={<Navigate to="/"/>} />
         </Routes>
