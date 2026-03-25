@@ -19,16 +19,27 @@ function NavBar() {
     return () => window.removeEventListener("scroll", scrollHandler);
   }, []);
 
-  const handleNavigation = (event, targetId) => {
-    event.preventDefault();
-    updateExpanded(false);
+  const MAIN_DOMAIN = "https://jack0237.com";
+  const BLOG_DOMAIN = "https://blog.jack0237.com";
 
-    if (location.pathname !== "/") {
-      window.location.href = `/#${targetId}`;
+  const getFullUrl = (path) => {
+    if (window.location.hostname.includes("localhost")) return path;
+    return `${MAIN_DOMAIN}${path}`;
+  };
+
+  const handleLinkClick = (e, path, forceSubdomain = false) => {
+    updateExpanded(false);
+    if (window.location.hostname.includes("localhost")) return;
+
+    if (forceSubdomain) {
+      if (!isBlogSubdomain) {
+        e.preventDefault();
+        window.location.href = BLOG_DOMAIN;
+      }
     } else {
-      const element = document.getElementById(targetId);
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
+      if (isBlogSubdomain) {
+        e.preventDefault();
+        window.location.href = `${MAIN_DOMAIN}${path}`;
       }
     }
   };
@@ -36,28 +47,26 @@ function NavBar() {
   return (
     <header className="curator-nav-wrapper">
       <nav className="curator-nav-pill">
-        <Link to="/" className="curator-nav-brand">
+        <Link 
+          to="/" 
+          className="curator-nav-brand"
+          onClick={(e) => handleLinkClick(e, "/")}
+        >
           Jack0237
         </Link>
         <div className="curator-nav-links">
           <Link
             to="/"
+            onClick={(e) => handleLinkClick(e, "/")}
             className={`curator-nav-link ${
-              location.pathname === "/" ? "active" : ""
+              (location.pathname === "/" && !isBlogSubdomain) ? "active" : ""
             }`}
           >
             Home
           </Link>
-          {/* <a
-            href="#about"
-            onClick={(e) => handleNavigation(e, "about")}
-            className="curator-nav-link"
-          >
-            About
-          </a> */}
           <Link
             to="/projects"
-            onClick={() => updateExpanded(false)}
+            onClick={(e) => handleLinkClick(e, "/projects")}
             className={`curator-nav-link ${
               location.pathname === "/projects" ? "active" : ""
             }`}
@@ -66,7 +75,7 @@ function NavBar() {
           </Link>
           <Link
             to="/resume"
-            onClick={() => updateExpanded(false)}
+            onClick={(e) => handleLinkClick(e, "/resume")}
             className={`curator-nav-link ${
               location.pathname === "/resume" ? "active" : ""
             }`}
@@ -75,7 +84,7 @@ function NavBar() {
           </Link>
           <Link
             to="/certifications"
-            onClick={() => updateExpanded(false)}
+            onClick={(e) => handleLinkClick(e, "/certifications")}
             className={`curator-nav-link ${
               location.pathname === "/certifications" ? "active" : ""
             }`}
@@ -84,13 +93,7 @@ function NavBar() {
           </Link>
           <Link
             to="/blog"
-            onClick={(e) => {
-              updateExpanded(false);
-              if (!isBlogSubdomain && !window.location.hostname.includes("localhost")) {
-                 e.preventDefault();
-                 window.location.href = "https://blog.jack0237.com";
-              }
-            }}
+            onClick={(e) => handleLinkClick(e, "/blog", true)}
             className={`curator-nav-link ${
               (location.pathname === "/blog" || isBlogSubdomain) ? "active" : ""
             }`}
@@ -125,46 +128,31 @@ function NavBar() {
       {/* Mobile Menu Dropdown */}
       {expand && (
         <div className="curator-mobile-menu">
-          <a
-            href="/"
-            onClick={(e) => handleNavigation(e, "home")}
+          <Link
+            to="/"
+            onClick={(e) => handleLinkClick(e, "/")}
             className="curator-nav-link"
           >
             Home
-          </a>
-          <a
-            href="#about"
-            onClick={(e) => handleNavigation(e, "about")}
-            className="curator-nav-link"
-          >
-            About
-          </a>
+          </Link>
           <Link
             to="/projects"
-            onClick={() => updateExpanded(false)}
+            onClick={(e) => handleLinkClick(e, "/projects")}
             className="curator-nav-link"
           >
             Projects
           </Link>
           <Link
             to="/resume"
-            onClick={() => updateExpanded(false)}
+            onClick={(e) => handleLinkClick(e, "/resume")}
             className="curator-nav-link"
           >
             Resume
           </Link>
           <Link
             to="/blog"
-            onClick={(e) => {
-              updateExpanded(false);
-              if (!isBlogSubdomain && !window.location.hostname.includes("localhost")) {
-                 e.preventDefault();
-                 window.location.href = "https://blog.jack0237.com";
-              }
-            }}
-            className={`curator-nav-link ${
-              (location.pathname === "/blog" || isBlogSubdomain) ? "active" : ""
-            }`}
+            onClick={(e) => handleLinkClick(e, "/blog", true)}
+            className="curator-nav-link"
           >
             Blog
           </Link>

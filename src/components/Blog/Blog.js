@@ -29,7 +29,7 @@ function Blog() {
       // Featured Card (Large)
       return (
         <article key={post.id} className="post-card glass-card group">
-          <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none' }}>
+          <Link to={`${post.id}`} style={{ textDecoration: 'none' }}>
             <div className="post-card-img-wrap aspect-4-5">
               {post.image && (
                 <img src={post.image.startsWith("http") ? post.image : imgMap[post.image]} alt={post.title} className="post-card-img featured-img" />
@@ -58,7 +58,7 @@ function Blog() {
       // Standard Text Card
       return (
         <article key={post.id} className="post-card glass-card group">
-          <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none' }}>
+          <Link to={`${post.id}`} style={{ textDecoration: 'none' }}>
             <div className="post-card-content border-b-content">
               <div className="status-row mb-4">
                 <span className="status-dot"></span>
@@ -82,7 +82,7 @@ function Blog() {
       // Image Card (Aspect Video)
       return (
         <article key={post.id} className="post-card glass-card group">
-          <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none' }}>
+          <Link to={`${post.id}`} style={{ textDecoration: 'none' }}>
             <div className="post-card-img-wrap aspect-video">
               {post.image && (
                 <img src={post.image.startsWith("http") ? post.image : imgMap[post.image]} alt={post.title} className="post-card-img hover-scale-105" />
@@ -100,7 +100,7 @@ function Blog() {
       // Quote/Typography Card
       return (
         <article key={post.id} className="post-card quote-card group">
-          <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none' }}>
+          <Link to={`${post.id}`} style={{ textDecoration: 'none' }}>
             <span className="material-symbols-outlined quote-icon" style={{ fontVariationSettings: "'FILL' 1" }}>terminal</span>
             <p className="quote-text">"{post.content.length > 100 ? post.content.substring(0, 100) + "..." : post.content}"</p>
             <div className="quote-divider"></div>
@@ -112,7 +112,7 @@ function Blog() {
       // Image Card (Aspect Square + Grayscale Hover)
       return (
         <article key={post.id} className="post-card glass-card group">
-          <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none' }}>
+          <Link to={`${post.id}`} style={{ textDecoration: 'none' }}>
             <div className="post-card-img-wrap aspect-square">
               {post.image && (
                 <img src={post.image.startsWith("http") ? post.image : imgMap[post.image]} alt={post.title} className="post-card-img grayscale-hover" />
@@ -131,7 +131,7 @@ function Blog() {
       // Simple List Card
       return (
         <article key={post.id} className="post-card glass-card p-8 group">
-          <Link to={`/blog/${post.id}`} style={{ textDecoration: 'none' }}>
+          <Link to={`${post.id}`} style={{ textDecoration: 'none' }}>
             <h3 className="list-card-title mb-8">System Archives</h3>
             <div className="space-y-6">
               <div className="list-item-block">

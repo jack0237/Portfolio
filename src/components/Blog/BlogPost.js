@@ -44,7 +44,7 @@ function BlogPost() {
         ></div>
         <div className="post-hero-overlay"></div>
         <Container className="post-hero-content">
-          <Link to="/blog" className="post-back-link">
+          <Link to=".." relative="path" className="post-back-link">
             <span className="material-symbols-outlined">west</span>
             Back to Logs
           </Link>
