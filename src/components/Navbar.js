@@ -3,9 +3,15 @@ import { Link, useLocation } from "react-router-dom";
 
 function NavBar() {
   const [expand, updateExpanded] = useState(false);
+  const [isBlogSubdomain, setIsBlogSubdomain] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
+    const hostname = window.location.hostname;
+    if (hostname.startsWith("blog.") || hostname.includes("blog-subdomain")) {
+      setIsBlogSubdomain(true);
+    }
+
     function scrollHandler() {
       // Logic for scroll if needed later, but the pill stays mostly fixed visually
     }
@@ -78,9 +84,15 @@ function NavBar() {
           </Link>
           <Link
             to="/blog"
-            onClick={() => updateExpanded(false)}
+            onClick={(e) => {
+              updateExpanded(false);
+              if (!isBlogSubdomain && !window.location.hostname.includes("localhost")) {
+                 e.preventDefault();
+                 window.location.href = "https://blog.jack0237.com";
+              }
+            }}
             className={`curator-nav-link ${
-              location.pathname === "/blog" ? "active" : ""
+              (location.pathname === "/blog" || isBlogSubdomain) ? "active" : ""
             }`}
           >
             Blog
@@ -143,8 +155,16 @@ function NavBar() {
           </Link>
           <Link
             to="/blog"
-            onClick={() => updateExpanded(false)}
-            className="curator-nav-link"
+            onClick={(e) => {
+              updateExpanded(false);
+              if (!isBlogSubdomain && !window.location.hostname.includes("localhost")) {
+                 e.preventDefault();
+                 window.location.href = "https://blog.jack0237.com";
+              }
+            }}
+            className={`curator-nav-link ${
+              (location.pathname === "/blog" || isBlogSubdomain) ? "active" : ""
+            }`}
           >
             Blog
           </Link>
