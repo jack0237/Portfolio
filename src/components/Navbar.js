@@ -19,6 +19,8 @@ function NavBar() {
     return () => window.removeEventListener("scroll", scrollHandler);
   }, []);
 
+  if (location.pathname === "/admin") return null;
+
   const MAIN_DOMAIN = "https://jack0237.com";
   const BLOG_DOMAIN = "https://blog.jack0237.com";
 

@@ -27,6 +27,7 @@ function Admin() {
   const [experiences, setExperiences] = useState([]);
   const [skills, setSkills] = useState([]);
   const [certifications, setCertifications] = useState([]);
+  const [projects, setProjects] = useState([]);
 
   // Local state for tag inputs to fix the "comma bug"
   const [blogTagInputs, setBlogTagInputs] = useState({});
@@ -52,6 +53,7 @@ function Admin() {
     setExperiences(await fetchCollection("experiences", INITIAL_RESUME_EXPERIENCE));
     setSkills(await fetchCollection("skills", INITIAL_RESUME_SKILLS));
     setCertifications(await fetchCollection("certifications", INITIAL_CERTIFICATIONS));
+    setProjects(await fetchCollection("projects", []));
 
     // Initialize tag inputs and history
     const tagMap = {};
@@ -106,6 +108,11 @@ function Admin() {
     setCertifications([newCert, ...certifications]);
   };
 
+  const addProject = () => {
+    const newProj = { id: Date.now().toString(), title: "New Project", description: "Project description...", image: "", tags: ["React"], category: "Web Design", status: "In Progress", link: "" };
+    setProjects([newProj, ...projects]);
+  };
+
   // Delete generic items (local and remote)
   const handleDeleteBlog = async (id) => {
     setBlogs(blogs.filter(b => b.id !== id));
@@ -122,6 +129,11 @@ function Admin() {
   const handleDeleteCert = async (id) => {
     setCertifications(certifications.filter(c => c.id !== id));
     await deleteDocument("certifications", id);
+  };
+
+  const handleDeleteProject = async (id) => {
+    setProjects(projects.filter(p => p.id !== id));
+    await deleteDocument("projects", id);
   };
 
   // Update local state without pushing to DB yet
@@ -175,6 +187,29 @@ function Admin() {
     setCertifications(certifications.map(c => (c.id === id ? { ...c, [field]: value } : c)));
   };
 
+  const updateProjectLocal = (id, field, value) => {
+    setProjects(projects.map(p => (p.id === id ? { ...p, [field]: value } : p)));
+  };
+
+  const handleProjectTagChange = (id, tagString) => {
+    const tags = tagString.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
+    updateProjectLocal(id, "tags", tags);
+  };
+
+  const handleProjectImageUpload = async (e, projId) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const url = await uploadImage(file, `project-images/${projId}_${file.name}`);
+      if (url) {
+        updateProjectLocal(projId, "image", url);
+        alert("Image uploaded successfully!");
+      }
+    } catch (err) {
+      alert("Failed to upload image.");
+    }
+  };
+
   // Push individual item to DB
   const saveBlogToDB = async (blog) => {
     await saveDocument("blogs", blog.id, blog);
@@ -190,6 +225,11 @@ function Admin() {
   const saveCertToDB = async (cert) => {
     await saveDocument("certifications", cert.id, cert);
     alert("Certification Saved successfully!");
+  };
+
+  const saveProjectToDB = async (proj) => {
+    await saveDocument("projects", proj.id, proj);
+    alert("Project Saved successfully!");
   };
 
 
@@ -236,6 +276,7 @@ function Admin() {
         <div className="admin-tabs mb-4">
           <button className={`admin-tab ${activeTab === "blog" ? "active" : ""}`} onClick={() => setActiveTab("blog")}>BLOG MANAGEMENT</button>
           <button className={`admin-tab ${activeTab === "resume" ? "active" : ""}`} onClick={() => setActiveTab("resume")}>EXPERIENCE TIMELINE</button>
+          <button className={`admin-tab ${activeTab === "projects" ? "active" : ""}`} onClick={() => setActiveTab("projects")}>PROJECTS</button>
           <button className={`admin-tab ${activeTab === "skills" ? "active" : ""}`} onClick={() => setActiveTab("skills")}>SKILL MATRIX</button>
           <button className={`admin-tab ${activeTab === "certs" ? "active" : ""}`} onClick={() => setActiveTab("certs")}>CERTIFICATIONS</button>
         </div>
@@ -400,6 +441,83 @@ function Admin() {
                   ))}
                 </tbody>
               </Table>
+            </div>
+          )}
+
+          {/* PROJECTS TAB */}
+          {activeTab === "projects" && (
+            <div>
+              <div className="d-flex justify-content-between mb-4">
+                <h3 className="admin-section-title">Project Showcase (Projects Collection)</h3>
+                <button className="admin-btn" onClick={addProject}>+ NEW PROJECT</button>
+              </div>
+              
+              {projects.map((proj) => (
+                <div key={proj.id} className="admin-item-block mb-4">
+                  <Row>
+                    <Col md={6}>
+                      <Form.Group className="mb-2">
+                        <Form.Label>Project Title</Form.Label>
+                        <Form.Control type="text" value={proj.title} onChange={(e) => updateProjectLocal(proj.id, "title", e.target.value)} className="admin-input" />
+                      </Form.Group>
+                    </Col>
+                    <Col md={2}>
+                      <Form.Group className="mb-2">
+                        <Form.Label>Category</Form.Label>
+                        <Form.Select value={proj.category} onChange={(e) => updateProjectLocal(proj.id, "category", e.target.value)} className="admin-input">
+                          <option value="Web Design">Web Design</option>
+                          <option value="Full-Stack">Full-Stack</option>
+                          <option value="AI/ML">AI/ML</option>
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                    <Col md={2}>
+                      <Form.Group className="mb-2">
+                        <Form.Label>Status</Form.Label>
+                        <Form.Select value={proj.status} onChange={(e) => updateProjectLocal(proj.id, "status", e.target.value)} className="admin-input">
+                          <option value="In Progress">In Progress</option>
+                          <option value="Done">Done</option>
+                          <option value="Released">Released</option>
+                        </Form.Select>
+                      </Form.Group>
+                    </Col>
+                    <Col md={2}>
+                       <Form.Group className="mb-2">
+                        <Form.Label>Project Link</Form.Label>
+                        <Form.Control type="text" value={proj.link} onChange={(e) => updateProjectLocal(proj.id, "link", e.target.value)} className="admin-input" />
+                      </Form.Group>
+                    </Col>
+                  </Row>
+                  <Form.Group className="mb-2">
+                    <Form.Label>Tags (Comma separated)</Form.Label>
+                    <Form.Control 
+                      type="text" 
+                      value={(proj.tags || []).join(', ')} 
+                      onChange={(e) => handleProjectTagChange(proj.id, e.target.value)} 
+                      className="admin-input" 
+                    />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Label>Description</Form.Label>
+                    <Form.Control as="textarea" rows={3} value={proj.description} onChange={(e) => updateProjectLocal(proj.id, "description", e.target.value)} className="admin-input" />
+                  </Form.Group>
+                  <Form.Group className="mb-2">
+                    <Form.Label>Project Image</Form.Label>
+                    <div className="d-flex align-items-center gap-3">
+                      <Form.Control type="file" accept="image/*" onChange={(e) => handleProjectImageUpload(e, proj.id)} className="admin-input flex-grow-1" />
+                      {proj.image && proj.image.startsWith('http') && (
+                        <div style={{width: "40px", height: "40px", overflow: 'hidden', borderRadius: '4px', border: '1px solid var(--neon-cyan)'}}>
+                           <img src={proj.image} alt="preview" style={{width: "100%", height: "100%", objectFit: "cover"}} />
+                        </div>
+                      )}
+                    </div>
+                  </Form.Group>
+                  <div className="mt-3">
+                    <button className="admin-btn me-2" onClick={() => saveProjectToDB(proj)}>SAVE TO FIRESTORE</button>
+                    <button className="admin-btn-danger" onClick={() => handleDeleteProject(proj.id)}>DELETE PROJECT</button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 

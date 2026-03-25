@@ -86,6 +86,29 @@ export const INITIAL_CERTIFICATIONS = [
   }
 ];
 
+export const INITIAL_PROJECTS = [
+  {
+    id: "1",
+    title: "Chatify",
+    description: "Personal Chat Room or Workspace to share resources and hangout with friends build with react.js, Material-UI, and Firebase. Features realtime messaging, image sharing, and reactions.",
+    image: "",
+    tags: ["React", "Firebase", "Material-UI"],
+    category: "Full-Stack",
+    status: "Released",
+    link: "https://chatify-49.web.app/"
+  },
+  {
+    id: "2",
+    title: "Bits-0f-C0de",
+    description: "My personal blog page build with Next.js and Tailwind Css which takes the content from markdown files and renders it using Next.js. Supports dark mode and easy authoring.",
+    image: "",
+    tags: ["Next.js", "Tailwind CSS"],
+    category: "Web Design",
+    status: "Released",
+    link: "https://blogs.soumya-jit.tech/"
+  }
+];
+
 export const fetchCollection = async (collectionName, fallback) => {
   try {
     const querySnapshot = await getDocs(collection(db, collectionName));

@@ -155,10 +155,42 @@
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--on-surface);
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 
-.project-desc {
+.project-status-badge {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--on-surface-variant);
+}
+
+.project-status-badge.released {
+  background: rgba(0, 255, 157, 0.15);
+  border-color: #00ff9d;
+  color: #00ff9d;
+  box-shadow: 0 0 10px rgba(0, 255, 157, 0.2);
+}
+
+.project-status-badge.in-progress {
+  background: rgba(255, 230, 0, 0.15);
+  border-color: #ffe600;
+  color: #ffe600;
+}
+
+.project-status-badge.done {
+  background: rgba(0, 217, 255, 0.15);
+  border-color: #00d9ff;
+  color: #00d9ff;
+}
+
+.project-tags {
+
   font-size: 0.95rem;
   line-height: 1.6;
   color: var(--on-surface-variant);
