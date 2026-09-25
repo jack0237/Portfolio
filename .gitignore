@@ -27,3 +27,13 @@ yarn-error.log*
 
 Server/node_modules
 Server/config.js
+# next.js
+/.next/
+/out/
+next-env.d.ts
+*.tsbuildinfo
+.vercel
+
+# Travail local de l equipe design (captures de sites tiers, fichiers de preparation) : non publie
+docs/references/
+docs/assets-staging/
