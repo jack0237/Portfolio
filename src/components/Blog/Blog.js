@@ -1,26 +1,26 @@
-import React, { useState, useEffect } from "react";
-import { Container } from "react-bootstrap";
 import blogImg1 from "../../Assets/blog-img-1.jpg";
 import blogImg2 from "../../Assets/blog-img-2.jpg";
 import blogImg3 from "../../Assets/blog-img-3.jpg";
-import { Link } from "react-router-dom";
-import { fetchCollection, INITIAL_BLOG_POSTS } from "../../utils/storage";
 import "./Blog.css";
 
+// Porté tel quel depuis l'ancien site (refonte à venir). Composant serveur : les articles
+// sont lus dans Firestore par la page (src/lib/firestore.ts), plus de SDK côté client.
 const imgMap = {
-  blogImg1,
-  blogImg2,
-  blogImg3
+  blogImg1: blogImg1.src,
+  blogImg2: blogImg2.src,
+  blogImg3: blogImg3.src
 };
 
-function Blog() {
-  const [blogs, setBlogs] = useState([]);
+const Link = ({ to, ...rest }) => <a href={`/blog/${encodeURIComponent(to)}`} {...rest} />;
+const imgSrc = (image) => (image && image.startsWith("http") ? image : imgMap[image]);
+const excerpt = (post, n) => {
+  const c = post.content || "";
+  return c.length > n ? c.substring(0, n) + "..." : c;
+};
 
-  useEffect(() => {
-    fetchCollection("blogs", INITIAL_BLOG_POSTS).then(data => {
-      setBlogs(data);
-    });
-  }, []);
+/** @param {{ posts?: import("../../lib/firestore").BlogPost[], emptyLabel?: string }} props */
+function Blog({ posts = [], emptyLabel = "" }) {
+  const blogs = posts;
 
   const renderCard = (post, i) => {
     const cardType = i % 6; // To mimic the 6 variations in their HTML
@@ -32,7 +32,7 @@ function Blog() {
           <Link to={`${post.id}`} style={{ textDecoration: 'none' }}>
             <div className="post-card-img-wrap aspect-4-5">
               {post.image && (
-                <img src={post.image.startsWith("http") ? post.image : imgMap[post.image]} alt={post.title} className="post-card-img featured-img" />
+                <img src={imgSrc(post.image)} alt={post.title} className="post-card-img featured-img" />
               )}
               <div className="post-card-gradient-overlay"></div>
               <div className="post-card-tag-wrapper">
@@ -45,7 +45,7 @@ function Blog() {
                 <span>{post.readTime || "08 MIN READ"}</span>
               </div>
               <h3 className="post-title featured-title">{post.title}</h3>
-              <p className="post-excerpt">{post.content.length > 120 ? post.content.substring(0, 120) + "..." : post.content}</p>
+              <p className="post-excerpt">{excerpt(post, 120)}</p>
               <div className="post-cta featured-cta">
                 Access Log 
                 <span className="material-symbols-outlined cta-icon">arrow_forward</span>
@@ -68,7 +68,7 @@ function Blog() {
               <div className="post-meta-line">{post.date}</div>
             </div>
             <div className="post-card-content">
-              <p className="post-excerpt mb-6">{post.content.length > 120 ? post.content.substring(0, 120) + "..." : post.content}</p>
+              <p className="post-excerpt mb-6">{excerpt(post, 120)}</p>
               <div className="tags-row">
                 {(post.tags || ["#RESEARCH", "#DEVLOG"]).map((tag, idx) => (
                   <span key={idx} className="style-tag">{tag}</span>
@@ -85,13 +85,13 @@ function Blog() {
           <Link to={`${post.id}`} style={{ textDecoration: 'none' }}>
             <div className="post-card-img-wrap aspect-video">
               {post.image && (
-                <img src={post.image.startsWith("http") ? post.image : imgMap[post.image]} alt={post.title} className="post-card-img hover-scale-105" />
+                <img src={imgSrc(post.image)} alt={post.title} className="post-card-img hover-scale-105" />
               )}
             </div>
             <div className="post-card-content flex-col gap-4">
               <div className="post-meta-line"><span>{post.date}</span></div>
               <h3 className="post-title standard-title">{post.title}</h3>
-              <p className="post-excerpt">{post.content.length > 80 ? post.content.substring(0, 80) + "..." : post.content}</p>
+              <p className="post-excerpt">{excerpt(post, 80)}</p>
             </div>
           </Link>
         </article>
@@ -102,7 +102,7 @@ function Blog() {
         <article key={post.id} className="post-card quote-card group">
           <Link to={`${post.id}`} style={{ textDecoration: 'none' }}>
             <span className="material-symbols-outlined quote-icon" style={{ fontVariationSettings: "'FILL' 1" }}>terminal</span>
-            <p className="quote-text">"{post.content.length > 100 ? post.content.substring(0, 100) + "..." : post.content}"</p>
+            <p className="quote-text">"{excerpt(post, 100)}"</p>
             <div className="quote-divider"></div>
             <span className="quote-author">Fragment {post.id.substring(0,5).toUpperCase()}</span>
           </Link>
@@ -115,13 +115,13 @@ function Blog() {
           <Link to={`${post.id}`} style={{ textDecoration: 'none' }}>
             <div className="post-card-img-wrap aspect-square">
               {post.image && (
-                <img src={post.image.startsWith("http") ? post.image : imgMap[post.image]} alt={post.title} className="post-card-img grayscale-hover" />
+                <img src={imgSrc(post.image)} alt={post.title} className="post-card-img grayscale-hover" />
               )}
             </div>
             <div className="post-card-content flex-col gap-4">
               <div className="post-meta-line">{post.date}</div>
               <h3 className="post-title standard-title">{post.title}</h3>
-              <p className="post-excerpt">{post.content.length > 80 ? post.content.substring(0, 80) + "..." : post.content}</p>
+              <p className="post-excerpt">{excerpt(post, 80)}</p>
               <div className="read-discussion-link mt-2">Read Discussion</div>
             </div>
           </Link>
@@ -136,7 +136,7 @@ function Blog() {
             <div className="space-y-6">
               <div className="list-item-block">
                 <span className="list-item-text">{post.title}</span>
-                <span className="list-item-date">{post.date.substring(post.date.length - 4) || "2024"}</span>
+                <span className="list-item-date">{(post.date || "").substring((post.date || "").length - 4)}</span>
               </div>
             </div>
           </Link>
@@ -147,7 +147,7 @@ function Blog() {
 
   return (
     <div className="blog-page">
-      <Container style={{ maxWidth: "1200px" }}>
+      <div className="legacy-container" style={{ maxWidth: "1200px" }}>
         {/* Hero Header */}
         <header className="blog-header">
           <h1 className="blog-title-bg">LOGS</h1>
@@ -168,19 +168,9 @@ function Blog() {
         <div className="blog-masonry-container">
           {blogs.map((post, i) => renderCard(post, i))}
         </div>
+        {blogs.length === 0 && <p className="legacy-empty">{emptyLabel}</p>}
 
-        {/* Pagination */}
-        <div className="pagination">
-          <button className="page-btn">
-            <span className="material-symbols-outlined">chevron_left</span>
-          </button>
-          <span className="page-text">PAGE <span>01</span> / 08</span>
-          <button className="page-btn">
-            <span className="material-symbols-outlined">chevron_right</span>
-          </button>
-        </div>
-
-      </Container>
+      </div>
     </div>
   );
 }

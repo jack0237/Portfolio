@@ -1,0 +1,83 @@
+/* Pages héritées (Projets, CV + Certifications, Blog, Article) portées telles quelles
+   en attendant leur refonte. Variables et utilitaires de l'ancien src/style.css / Bootstrap,
+   limités à .legacy pour ne rien changer au socle (navbar, footer, accueil). */
+.legacy {
+  --background: #131313;
+  --surface: #131313;
+  --surface-container-low: #1c1b1b;
+  --surface-container: #201f1f;
+  --surface-container-high: #2a2a2a;
+  --surface-container-highest: #353534;
+  --on-background: #e5e2e1;
+  --on-surface: #e5e2e1;
+  --on-surface-variant: #b9cacb;
+  --outline: #849495;
+  --outline-variant: #3b494b;
+  --primary: #dbfcff;
+  --primary-container: #00f0ff;
+  --primary-fixed: #7df4ff;
+  --primary-fixed-dim: #00dbe9;
+  --on-primary: #00363a;
+  --secondary: #d0bcff;
+  --secondary-container: #571bc1;
+  --neon-cyan: #00f0ff;
+  --error: #ffb4ab;
+  --glass-bg: rgba(28, 27, 27, 0.4);
+  --glass-bg-hover: rgba(28, 27, 27, 0.6);
+  --glass-border: rgba(132, 148, 149, 0.1);
+  --glass-border-hover: rgba(0, 240, 255, 0.3);
+  --glass-blur: blur(12px);
+
+  background: var(--background);
+  color: var(--on-background);
+  font-family: "Manrope", system-ui, sans-serif;
+  min-height: 100vh;
+}
+.legacy a { color: inherit; }
+
+.legacy-container {
+  width: 100%;
+  max-width: 1320px;
+  margin-inline: auto;
+  padding-inline: 12px;
+  position: relative;
+}
+.legacy-row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 24px; }
+@media (min-width: 768px) { .legacy-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 992px) { .legacy-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.legacy .d-flex { display: flex; }
+.legacy .justify-content-between { justify-content: space-between; }
+.legacy .align-items-center { align-items: center; }
+.legacy .mb-0 { margin-bottom: 0; }
+.legacy .mb-2 { margin-bottom: 0.5rem; }
+.legacy .mb-4 { margin-bottom: 1rem; }
+.legacy .mb-8 { margin-bottom: 2rem; }
+.legacy .mt-5 { margin-top: 3rem; }
+
+.legacy .page-transition { animation: legacyFadeInSlide 0.8s cubic-bezier(0.25, 0.8, 0.25, 1) both; }
+@keyframes legacyFadeInSlide {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+html[data-motion="reduced"] .legacy .page-transition { animation: none; }
+
+.legacy .material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: "liga";
+  font-feature-settings: "liga";
+  -webkit-font-smoothing: antialiased;
+}
+.legacy-empty { padding: 4rem 0; text-align: center; color: var(--on-surface-variant); }
+
+/* L'ancien body avait overflow-x: hidden ; le halo fixe de Projets dépasse à droite. */
+html:has(main.legacy) { overflow-x: clip; }

@@ -1,3 +1,8 @@
+"use client";
+
+// Admin porté tel quel (client uniquement, chargé sans rendu serveur par AdminLoader).
+// Bootstrap n'est chargé que sur cette page (formulaires react-bootstrap).
+import "bootstrap/dist/css/bootstrap.min.css";
 import React, { useState, useEffect } from "react";
 import { Container, Form, Button, Row, Col, Table } from "react-bootstrap";
 import MDEditor from '@uiw/react-md-editor';
@@ -34,6 +39,11 @@ function Admin() {
   const [allExistingTags, setAllExistingTags] = useState([]);
 
   useEffect(() => {
+    // Sans configuration Firebase (build local sans .env), auth vaut null : écran de connexion inactif.
+    if (!auth) {
+      setLoading(false);
+      return undefined;
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser && currentUser.email === ADMIN_EMAIL) {
         setUser(currentUser);
@@ -68,6 +78,10 @@ function Admin() {
 
 
   const handleLogin = async () => {
+    if (!auth) {
+      alert("Firebase is not configured on this deployment.");
+      return;
+    }
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);

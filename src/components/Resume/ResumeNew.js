@@ -1,9 +1,12 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
-import { Container } from "react-bootstrap";
-import pdf from "../../Assets/RN_CV_NGUEGUIM_WILFRIED.pdf";
 import { AiOutlineDownload } from "react-icons/ai";
 import "./Resume.css";
+import { CV_PATH } from "../../lib/site";
 import { fetchCollection, INITIAL_RESUME_EXPERIENCE, INITIAL_RESUME_SKILLS } from "../../utils/storage";
+
+const pdf = CV_PATH;
 
 // Reusable Dot-Matrix Skill Component
 const SkillMatrix = ({ label, level }) => {
@@ -41,7 +44,7 @@ function ResumeNew() {
     <div className="resume-page page-transition">
       <div className="resume-scanlines"></div>
       
-      <Container className="resume-container">
+      <div className="legacy-container resume-container">
         
         {/* Top Download PDF CTA */}
         <div className="resume-download-btn-wrapper">
@@ -97,7 +100,7 @@ function ResumeNew() {
           </a>
         </div>
 
-      </Container>
+      </div>
     </div>
   );
 }

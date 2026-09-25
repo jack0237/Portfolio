@@ -1,53 +1,25 @@
-import React, { useEffect, useState } from "react";
-import { Container } from "react-bootstrap";
-import { Link, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { fetchDocument } from "../../utils/storage";
 import blogImg1 from "../../Assets/blog-img-1.jpg";
 import "./BlogPost.css";
 
-function BlogPost() {
-  const { id } = useParams();
-  const [post, setPost] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // Scroll to top when loading the article
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [id]);
-
-  useEffect(() => {
-    const getPost = async () => {
-      const data = await fetchDocument("blogs", id);
-      setPost(data);
-      setLoading(false);
-    };
-    getPost();
-  }, [id]);
-
-  if (loading) {
-    return <div style={{padding: "200px 0", textAlign: "center", color: "var(--primary-text)"}}>LOADING ARCHIVE...</div>;
-  }
-
-  if (!post) {
-    return <div style={{padding: "200px 0", textAlign: "center", color: "var(--neon-cyan)"}}>SYSTEM ERROR: LOG NOT FOUND</div>;
-  }
-
+// Porté tel quel depuis l'ancien site (refonte à venir). Composant serveur : l'article est lu
+// dans Firestore par la page app/(fr)/blog/[id] (404 réelle si l'identifiant n'existe pas).
+function BlogPost({ post }) {
   return (
-    <div className="blog-post-page">
+    <article className="blog-post-page" lang={post.lang || "en"}>
       {/* Hero Section */}
       <section className="post-hero">
         <div 
           className="post-hero-bg" 
-          style={{ backgroundImage: `url(${post.image && post.image.startsWith("http") ? post.image : blogImg1})` }}
+          style={{ backgroundImage: `url(${JSON.stringify(post.image && post.image.startsWith("http") ? post.image : blogImg1.src)})` }}
         ></div>
         <div className="post-hero-overlay"></div>
-        <Container className="post-hero-content">
-          <Link to=".." relative="path" className="post-back-link">
+        <div className="legacy-container post-hero-content">
+          <a href="/blog" className="post-back-link">
             <span className="material-symbols-outlined">west</span>
             Back to Logs
-          </Link>
+          </a>
           <div className="post-header-meta">
             <span><span className="primary-text">PUBLISHED:</span> {post.date}</span>
             {post.readTime && <span><span className="primary-text">READ TIME:</span> {post.readTime}</span>}
@@ -56,15 +28,15 @@ function BlogPost() {
           <h1 className="post-header-title">
             {post.title}
           </h1>
-        </Container>
+        </div>
       </section>
 
       {/* Article Content */}
-      <Container className="post-article-wrapper">
+      <div className="legacy-container post-article-wrapper">
         <div className="post-article-glass">
           <div className="post-content">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {post.content}
+              {post.content || ""}
             </ReactMarkdown>
             
             {/* Tags */}
@@ -77,8 +49,8 @@ function BlogPost() {
             )}
           </div>
         </div>
-      </Container>
-    </div>
+      </div>
+    </article>
   );
 }
 

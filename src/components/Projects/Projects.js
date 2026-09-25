@@ -1,5 +1,6 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
-import { Container } from "react-bootstrap";
 import leaf from "../../Assets/Projects/leaf.png";
 import emotion from "../../Assets/Projects/emotion.png";
 import editor from "../../Assets/Projects/codeEditor.png";
@@ -9,13 +10,14 @@ import bitsOfCode from "../../Assets/Projects/blog.png";
 import { fetchCollection } from "../../utils/storage";
 import "./Projects.css";
 
+// Imports statiques Next.js : objets { src, width, height }, on garde l'URL.
 const imgMap = {
-  chatify,
-  bitsOfCode,
-  editor,
-  leaf,
-  suicide,
-  emotion
+  chatify: chatify.src,
+  bitsOfCode: bitsOfCode.src,
+  editor: editor.src,
+  leaf: leaf.src,
+  suicide: suicide.src,
+  emotion: emotion.src
 };
 
 const INITIAL_PROJECTS_DATA = [
@@ -101,7 +103,7 @@ function Projects() {
     <div className="projects-page page-transition">
       <div className="projects-glow"></div>
       
-      <Container>
+      <div className="legacy-container">
         {/* Top Header */}
         <div style={{ textAlign: "center", marginBottom: "3rem" }}>
           <h1 className="project-heading" style={{ fontSize: "3.5rem", fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700 }}>
@@ -149,7 +151,7 @@ function Projects() {
                   </span>
                 </div>
                 <div className="project-tags">
-                  {project.tags.map((tag, i) => (
+                  {(project.tags || []).map((tag, i) => (
                     <span className="project-tag" key={i}>{tag}</span>
                   ))}
                 </div>
@@ -163,7 +165,7 @@ function Projects() {
             </a>
           ))}
         </div>
-      </Container>
+      </div>
     </div>
   );
 }

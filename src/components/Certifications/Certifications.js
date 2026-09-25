@@ -1,5 +1,6 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col } from "react-bootstrap";
 import { fetchCollection, INITIAL_CERTIFICATIONS } from "../../utils/storage";
 import "./Certifications.css";
 import { FiAward, FiClock, FiExternalLink } from "react-icons/fi";
@@ -17,9 +18,9 @@ function Certifications() {
   const ongoingCerts = certifications.filter(cert => cert.status === 'ongoing');
 
   return (
-    <div className="certifications-page page-transition">
+    <div id="certifications" className="certifications-page page-transition">
       <div className="cert-bg-noise"></div>
-      <Container className="cert-container">
+      <div className="legacy-container cert-container">
         
         <div className="cert-header">
           <h1 className="cert-title">CREDENTIALS <span className="accent-text">& MASTERY</span></h1>
@@ -30,9 +31,9 @@ function Certifications() {
         {completedCerts.length > 0 && (
           <>
             <h2 className="cert-section-title"><span className="status-dot completed"></span> ACQUIRED CERTIFICATIONS</h2>
-            <Row className="cert-grid">
+            <div className="legacy-row cert-grid">
               {completedCerts.map((cert) => (
-                <Col md={6} lg={4} key={cert.id} className="mb-4">
+                <div key={cert.id} className="mb-4">
                   <div className="cert-card">
                     <div className="cert-icon-wrap">
                       <FiAward className="cert-icon" />
@@ -50,19 +51,19 @@ function Certifications() {
                       </div>
                     </div>
                   </div>
-                </Col>
+                </div>
               ))}
-            </Row>
-          </  >
+            </div>
+          </>
         )}
 
         {/* Ongoing Certifications */}
         {ongoingCerts.length > 0 && (
           <>
             <h2 className="cert-section-title mt-5"><span className="status-dot ongoing"></span> ONGOING TRAINING</h2>
-            <Row className="cert-grid">
+            <div className="legacy-row cert-grid">
               {ongoingCerts.map((cert) => (
-                <Col md={6} lg={4} key={cert.id} className="mb-4">
+                <div key={cert.id} className="mb-4">
                   <div className="cert-card ongoing-card">
                      <div className="cert-icon-wrap ongoing">
                       <FiClock className="cert-icon" />
@@ -75,13 +76,13 @@ function Certifications() {
                       </div>
                     </div>
                   </div>
-                </Col>
+                </div>
               ))}
-            </Row>
-          </  >
+            </div>
+          </>
         )}
 
-      </Container>
+      </div>
     </div>
   );
 }
