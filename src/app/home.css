@@ -1,0 +1,516 @@
+/* Accueil : l'expédition en six scènes (DESIGN.md 7). Mobile first. */
+
+/* ---------- Scènes communes ---------- */
+.scene {
+  position: relative;
+  padding-block: var(--scene-pad);
+  isolation: isolate;
+}
+.scene--bg { background: var(--color-bg); }
+.scene--panel { background: var(--color-panel); }
+
+/* Grille apparente : 4 bandes desktop (5 lignes), 2 bandes mobile (3 lignes), DESIGN 4.2 */
+.scene__grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  pointer-events: none;
+}
+.scene__grid::before {
+  content: "";
+  position: absolute;
+  inset: 0 var(--margin);
+  border-right: 1px solid var(--color-line);
+  background-image: linear-gradient(to right, var(--color-line) 1px, transparent 1px);
+  background-size: calc(100% / var(--bands)) 100%;
+}
+
+.scene__inner { position: relative; }
+.scene__crosses { inset: calc(var(--scene-pad) * -0.5) var(--margin); }
+.scene__label { margin-bottom: var(--space-4); }
+.scene__head {
+  display: grid;
+  gap: var(--space-4);
+  align-items: end;
+  margin-bottom: var(--space-7);
+}
+.scene__title { max-width: 12ch; }
+.scene__voice { color: var(--color-text-2); max-width: 40ch; }
+.scene__intro { color: var(--color-text-2); max-width: 48ch; }
+.scene__end { margin-top: var(--space-6); }
+.scene__end--right { display: flex; justify-content: flex-end; }
+
+@media (min-width: 1024px) {
+  .scene__head { grid-template-columns: auto 1fr; gap: var(--space-7); }
+  .scene__head > :nth-child(2) { justify-self: end; text-align: right; }
+}
+
+/* Bandes de transition (palier riche seulement, pilotées par le moteur). Invisibles par défaut. */
+.bands {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  pointer-events: none;
+}
+.bands i { transform: scaleY(0); transform-origin: top; }
+.bands--bg i { background: var(--color-bg); }
+.bands--panel i { background: var(--color-panel); }
+
+/* ---------- Fil cyan (DESIGN 1, 6.2) ---------- */
+.journey { position: relative; }
+.thread {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: max(calc(var(--margin) / 2), calc((100% - var(--content-max)) / 2 + var(--margin) / 2));
+  width: 1px;
+  z-index: 2;
+  pointer-events: none;
+}
+.thread__line {
+  position: absolute;
+  inset: 0;
+  background: var(--color-cyan-dim);
+  transform-origin: top;
+}
+.scene__dot {
+  position: absolute;
+  top: 4px;
+  left: calc(var(--margin) / -2 - 3.5px);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: 1px solid var(--color-cyan-dim);
+  z-index: 3;
+}
+.scene.is-passed .scene__dot,
+html:not([data-motion="rich"]):not([data-motion="standard"]) .scene__dot { background: var(--color-cyan); border-color: var(--color-cyan); }
+.thread-head {
+  display: block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-cyan);
+}
+.thread-draw { stroke: var(--color-cyan); stroke-width: 1px; fill: none; }
+
+/* ---------- Scène 01 : Hero ---------- */
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  padding-top: calc(var(--nav-h) + var(--space-5));
+  padding-bottom: var(--space-7);
+  background: var(--color-bg);
+  isolation: isolate;
+  overflow: hidden;
+}
+/* Fond du hero : relief topographique (poster + scène WebGL + voile), voir src/site/home/HeroVisual.module.css.
+   Remplace le poster de brume (.hero__mist) le 2026-09-25. */
+.hero__inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--space-4);
+}
+.hero__inner > .crosses { inset: 0 var(--margin); }
+.hero__meta { margin-bottom: var(--space-2); }
+.hero__side { display: grid; gap: var(--space-2); }
+.hero__signature { color: var(--color-text-2); }
+
+.hero__name { position: relative; z-index: 1; container-type: inline-size; }
+.hero__h1 { display: grid; font-weight: inherit; }
+.hero__first { display: block; }
+.hero__giant {
+  display: block;
+  font-stretch: 75%;
+  font-weight: 900;
+  /* Ajusté bord à bord de la grille : 8 capitales condensées ~ 3,55 em de large (mesuré) */
+  font-size: min(28cqi, 448px);
+  line-height: 0.8;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--color-text);
+  padding-top: 0.04em;
+}
+.hero__giant.is-dissolving {
+  -webkit-mask-image: linear-gradient(to top, #000 calc(100% - var(--dissolve, 0) * 140%), transparent calc(140% - var(--dissolve, 0) * 140%)), url("/images/hero/noise-dissolve-tile-1024.webp");
+  mask-image: linear-gradient(to top, #000 calc(100% - var(--dissolve, 0) * 140%), transparent calc(140% - var(--dissolve, 0) * 140%)), url("/images/hero/noise-dissolve-tile-1024.webp");
+  -webkit-mask-size: 100% 100%, 480px 480px;
+  mask-size: 100% 100%, 480px 480px;
+  -webkit-mask-composite: source-over;
+  mask-composite: add;
+}
+.hero__title { color: var(--color-text); max-width: 20ch; }
+.hero__thread { position: relative; height: 12px; }
+.hero__thread svg { width: 100%; height: 12px; overflow: visible; }
+.hero__thread .thread-head { position: absolute; left: 6%; top: 50%; transform: translate(-50%, -50%); }
+.hero__intro { display: grid; gap: var(--space-5); margin-top: var(--space-2); }
+.hero__value { color: var(--color-text-2); max-width: 40ch; }
+.hero__ctas { display: grid; gap: var(--space-3); }
+.hero__ctas .btn { width: 100%; }
+
+@media (min-width: 640px) {
+  .hero__ctas { display: flex; flex-wrap: wrap; }
+  .hero__ctas .btn { width: auto; }
+}
+
+@media (min-width: 1024px) {
+  .hero { padding-bottom: var(--space-6); }
+  .hero__inner {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: auto 1fr auto auto;
+    column-gap: var(--gutter);
+    row-gap: 0;
+    min-height: calc(100svh - var(--nav-h) - var(--space-5) - var(--space-6));
+  }
+  .hero__meta { grid-column: 1 / 4; grid-row: 1; }
+  .hero__intro { grid-column: 1 / 6; grid-row: 2; align-self: end; margin: 0 0 var(--space-7); gap: var(--space-6); }
+  .hero__value { font-size: 22px; line-height: 1.45; }
+  /* Titre + alias : colonne droite, au-dessus de la ligne du prénom, alignés sur le bas des CTA.
+     Ils ne partagent plus la rangée du mot géant : aucune collision possible, FR comme EN. */
+  .hero__side {
+    grid-column: 8 / -1;
+    grid-row: 2;
+    align-self: end;
+    justify-items: end;
+    text-align: right;
+    margin: 0 0 var(--space-7);
+  }
+  .hero__title { max-width: 24ch; }
+  .hero__name { grid-column: 1 / -1; grid-row: 3; margin-top: 0; }
+  .hero__thread { grid-column: 1 / -1; grid-row: 4; margin-top: var(--space-4); }
+}
+
+/* ---------- Scène 02 : Projets ---------- */
+.relanceo { display: grid; gap: var(--space-7); }
+.relanceo__text { display: grid; gap: var(--space-4); align-content: start; }
+.relanceo__name { margin-top: calc(var(--space-2) * -1); }
+.relanceo__subtitle { color: var(--color-text); font-size: 19px; line-height: 1.45; max-width: 44ch; }
+.relanceo__block { display: grid; gap: var(--space-2); max-width: 60ch; color: var(--color-text-2); }
+.relanceo__block .meta { margin-top: var(--space-3); }
+.relanceo__list { padding-left: 1.1em; display: grid; gap: var(--space-2); }
+.relanceo__list li::marker { color: var(--color-cyan-dim); }
+.relanceo__actions { margin-top: var(--space-4); display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center; }
+.relanceo__aside {
+  position: relative;
+  align-self: center;
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-7) var(--space-6);
+  border: 1px solid var(--color-line-strong);
+  background: var(--color-bg);
+}
+.relanceo__voice { font-size: clamp(22px, 2.2vw, 32px); }
+.relanceo__url::before { content: "● ● ●  "; color: var(--color-line-strong); letter-spacing: 0.1em; }
+
+.badges { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.badge {
+  font-family: var(--font-data);
+  font-size: var(--type-meta);
+  letter-spacing: 0.04em;
+  color: var(--color-text-2);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius-pill);
+  padding: 4px var(--space-3);
+}
+
+@media (min-width: 1024px) {
+  .relanceo { grid-template-columns: 5fr 7fr; gap: var(--space-9); align-items: center; }
+}
+
+.automations { margin-top: var(--space-10); }
+.automations__title { margin-bottom: var(--space-5); }
+.auto { position: relative; }
+.auto__controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: calc(var(--space-5) * -1 - 44px);
+  margin-bottom: var(--space-5);
+}
+.auto__count { margin-right: var(--space-3); }
+.auto__count b { color: var(--color-cyan); font-weight: 400; }
+.auto__btn {
+  width: 44px; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--color-text-3);
+  color: var(--color-text);
+}
+.auto__btn:hover:not(:disabled) { border-color: var(--color-text); background: var(--color-raised); }
+.auto__btn:disabled { opacity: 0.4; cursor: default; }
+.auto__btn .icon { width: 18px; height: 18px; }
+.auto__viewport { overflow: visible; }
+.auto__track {
+  display: flex;
+  gap: var(--gutter);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: var(--space-2);
+  margin-inline: calc(var(--margin) * -1);
+  padding-inline: var(--margin);
+  scroll-padding-inline: var(--margin);
+}
+.auto__track::-webkit-scrollbar { display: none; }
+.auto-card {
+  /* Contient ses .sr-only (position absolue) : sans cela ils échappent au défilement
+     de .auto__track et élargissent la page mobile (672 px au lieu de 390, QA 2026-09-25). */
+  position: relative;
+  flex: 0 0 85%;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-5);
+  background: var(--color-bg);
+  border: 1px solid var(--color-line-strong);
+}
+.auto-card:focus-visible { outline-offset: -2px; }
+.auto-card__desc { color: var(--color-text-2); }
+.auto-card__note { color: var(--color-text-3); }
+.auto-card__stack { margin-top: auto; padding-top: var(--space-3); }
+.auto__dots { display: flex; gap: var(--space-2); margin-top: var(--space-4); }
+.auto__dots span { width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--color-text-3); }
+.auto__dots span.is-active { background: var(--color-cyan); border-color: var(--color-cyan); }
+
+@media (min-width: 768px) {
+  .auto-card { flex-basis: 60%; }
+}
+@media (min-width: 1024px) {
+  .auto-card { flex-basis: calc((100% - 2 * var(--gutter)) * 0.42); padding: var(--space-6); }
+  .auto__dots { display: none; }
+}
+
+/* Palier riche : le moteur pilote le défilement (piste en transform, pas de scroll natif) */
+.auto.is-pinned .auto__viewport { overflow: hidden; margin-inline: calc(var(--margin) * -1); }
+.auto.is-pinned .auto__track { overflow: visible; scroll-snap-type: none; margin-inline: 0; }
+
+/* Palier réduit : liste verticale, contrôles masqués (DESIGN 6.4) */
+html[data-motion="reduced"] .auto__controls,
+html[data-motion="reduced"] .auto__dots { display: none; }
+html[data-motion="reduced"] .auto__track {
+  flex-direction: column;
+  overflow: visible;
+  scroll-snap-type: none;
+  margin-inline: 0;
+  padding-inline: 0;
+}
+@media (min-width: 1024px) {
+  html[data-motion="reduced"] .auto__track { display: grid; grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Schémas de flux */
+.flow { width: 100%; height: auto; aspect-ratio: 3 / 2; }
+.flow__path { stroke: var(--color-cyan); stroke-width: 1.25; }
+.flow__node rect { fill: var(--color-panel); stroke: var(--color-cyan-dim); stroke-width: 1; }
+.flow__node--trigger rect { stroke: var(--color-cyan); }
+.flow__node text {
+  fill: var(--color-text-2);
+  font-family: var(--font-data);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+/* ---------- Scène 03 : Services ---------- */
+.branches { display: none; width: 100%; height: 64px; overflow: visible; }
+.branches__path { stroke: var(--color-cyan-dim); stroke-width: 1px; transition: stroke var(--dur-instant) var(--ease-ui); }
+.services__list { display: grid; gap: var(--gutter); }
+.service {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  padding: var(--space-6) var(--space-5);
+  border: 1px solid var(--color-line-strong);
+  background: var(--color-bg);
+  transition: background-color var(--dur-instant) var(--ease-ui);
+}
+.service__point {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 9px; height: 9px;
+  margin-left: -4.5px;
+  border-radius: 50%;
+  background: var(--color-cyan-dim);
+  display: none;
+}
+.service__num { color: var(--color-text-3); }
+.service__title {
+  font-stretch: 75%;
+  font-weight: 800;
+  font-size: clamp(30px, 3vw, 40px);
+  line-height: 0.95;
+  text-transform: uppercase;
+  max-width: 12ch;
+}
+.service__text { color: var(--color-text-2); }
+.service__stack { margin-top: var(--space-2); }
+.service:hover { background: var(--color-raised); }
+
+@media (min-width: 1024px) {
+  .branches { display: block; }
+  .services__list { grid-template-columns: repeat(3, 1fr); }
+  .service__point { display: block; }
+  .services:has(.service--0:hover) .branches__path--0,
+  .services:has(.service--1:hover) .branches__path--1,
+  .services:has(.service--2:hover) .branches__path--2 { stroke: var(--color-cyan); }
+  .services:has(.service:hover) .service:not(:hover) { opacity: 0.85; }
+}
+
+/* ---------- Scène 04 : Stack ---------- */
+.stack__groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6) var(--gutter);
+}
+.stack__label { margin-bottom: var(--space-4); }
+.stack__logos { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.stack__logo { position: relative; color: var(--color-text-2); transition: color var(--dur-instant) var(--ease-ui); }
+.stack__logo svg { width: 28px; height: 28px; }
+.stack__logo:hover { color: var(--color-text); }
+.stack__logo::after {
+  content: attr(data-name);
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--font-data);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--color-text);
+  background: var(--color-raised);
+  padding: 2px 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-instant) var(--ease-ui);
+  z-index: 2;
+}
+.stack__logo:hover::after { opacity: 1; }
+.stack__baseline {
+  position: relative;
+  margin-top: var(--space-8);
+  height: 1px;
+  background: var(--color-cyan-dim);
+  transform-origin: left;
+}
+.stack__baseline .thread-head { position: absolute; right: 0; top: -4px; }
+@media (min-width: 1024px) {
+  .stack__groups { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+/* ---------- Scène 05 : Blog ---------- */
+.journal { display: grid; }
+.journal__item + .journal__item { border-top: 1px solid var(--color-line-strong); }
+.entry {
+  position: relative;
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-4) var(--space-6) var(--space-6);
+  transition: background-color var(--dur-instant) var(--ease-ui);
+}
+.entry:hover { background: var(--color-raised); }
+.entry:focus-visible { outline-offset: -2px; }
+.entry::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-cyan-dim);
+}
+.entry__dot {
+  position: absolute;
+  left: 0;
+  top: calc(var(--space-6) + 3px);
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--color-cyan);
+}
+.entry__meta { display: grid; gap: var(--space-1); }
+.entry__eyebrow { color: var(--color-text-2); }
+.entry__visual { display: block; aspect-ratio: 16 / 9; overflow: hidden; background: var(--color-raised); }
+.entry__visual img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); transition: filter var(--dur-base) var(--ease-ui); }
+.entry:hover .entry__visual img { filter: none; }
+.entry__body { display: grid; gap: var(--space-3); align-content: start; }
+.entry__title { overflow-wrap: anywhere; }
+.entry__tags { display: flex; flex-wrap: wrap; gap: var(--space-3); color: var(--color-text-3); }
+.entry__badge { border: 1px solid var(--color-text-3); padding: 0 6px; color: var(--color-text-2); }
+.entry__read {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-cyan);
+  font-weight: 600;
+  font-size: var(--type-button);
+}
+.entry__read .icon { width: 16px; height: 16px; transition: transform var(--dur-instant) var(--ease-out); }
+.entry:hover .entry__read .icon { transform: translateX(4px); }
+html[data-motion="reduced"] .entry:hover .entry__read .icon { transform: none; }
+.journal--empty { padding: var(--space-7) 0; border-block: 1px solid var(--color-line-strong); }
+.journal--empty .voice { color: var(--color-text-2); }
+
+@media (min-width: 1024px) {
+  .entry {
+    grid-template-columns: minmax(180px, 2fr) minmax(200px, 3fr) 6fr auto;
+    align-items: start;
+    gap: var(--space-6);
+    padding-left: var(--space-7);
+  }
+  .entry__read { align-self: center; }
+}
+
+/* ---------- Scène 06 : Appel final ---------- */
+.final__voice {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 350;
+  font-size: clamp(32px, 5vw, 72px);
+  line-height: 1.1;
+  max-width: 22ch;
+}
+.final__arrival { position: relative; margin-top: var(--space-7); height: 12px; }
+.final__arrival svg { width: 100%; height: 12px; overflow: visible; }
+.final__arrival .thread-head { position: absolute; right: 0; top: 50%; transform: translate(50%, -50%); }
+.final__actions {
+  margin-top: var(--space-6);
+  display: grid;
+  gap: var(--space-4);
+}
+.final__actions .btn { width: 100%; }
+.final__cv { display: grid; gap: var(--space-2); }
+.final__foot {
+  margin-top: var(--space-8);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+.final__socials { display: flex; flex-wrap: wrap; gap: var(--space-6); }
+.final__socials a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-2);
+}
+.final__socials a:hover { color: var(--color-text); }
+.final__socials .icon { width: 14px; height: 14px; }
+@media (min-width: 768px) {
+  .final__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: flex-start; }
+  .final__actions .btn { width: auto; }
+  .final__arrival { width: 70%; }
+}

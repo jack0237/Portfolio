@@ -1,0 +1,88 @@
+/* Design tokens : docs/DESIGN.md section 2 et 3.3. Les composants n'utilisent que les tokens sémantiques. */
+:root {
+  /* 2.1 Couleurs */
+  --color-bg: #07090b;
+  --color-panel: #0f1720;
+  --color-raised: #16202a;
+  --color-line: #1e2a35;
+  --color-line-strong: #2c3a47;
+  --color-text: #f2f6f8;
+  --color-text-2: #a3b1ba;
+  --color-text-3: #7a8a95;
+  --color-cyan: #00f0ff;
+  --color-cyan-dim: #00b8c4;
+  --color-ember: #ff7a3d;
+  --color-on-accent: #07090b;
+
+  /* 2.3 Espacements (base 4 px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
+  --space-11: 192px;
+
+  /* 2.4 Rayons, ombres */
+  --radius-0: 0;
+  --radius-1: 2px;
+  --radius-pill: 999px;
+  --shadow-capture: 0 40px 80px -40px rgba(0, 0, 0, 0.8);
+
+  /* 2.5 Mouvement. Deux familles (DESIGN 6.5) :
+     retours d'interface (survol, bouton, interrupteur, menu) 150 à 300 ms en ease-out ;
+     révélations et scroll (moteur GSAP) 0,8 à 1 s en ease-out marqué. */
+  --dur-instant: 150ms;
+  --dur-fast: 200ms;
+  --dur-base: 300ms;
+  --dur-reveal: 800ms;
+  --dur-slow: 900ms;
+  --dur-epic: 1200ms;
+  --ease-ui: cubic-bezier(0.33, 1, 0.68, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-linear: linear;
+
+  /* 3 Typographie */
+  --font-info: var(--font-mona), "Mona Sans", Arial, sans-serif;
+  --font-serif: var(--font-voice), "Newsreader", Georgia, serif;
+  --font-data: var(--font-mono), "JetBrains Mono", ui-monospace, monospace;
+
+  --type-display: clamp(44px, 7vw, 112px);
+  --type-h2: clamp(30px, 3.6vw, 52px);
+  --type-h3: clamp(20px, 1.8vw, 26px);
+  --type-voice: clamp(22px, 2.4vw, 36px);
+  --type-voice-sm: 17px;
+  --type-body: 16px;
+  --type-small: 14px;
+  --type-meta: 12px;
+  --type-button: 15px;
+
+  /* 4 Grille (xs par défaut, mobile first) */
+  --margin: 20px;
+  --gutter: 16px;
+  --bands: 2;
+  --nav-h: 60px;
+  --content-max: 1600px;
+  --scene-pad: var(--space-8);
+}
+
+@media (min-width: 640px) {
+  :root { --margin: 24px; }
+}
+@media (min-width: 768px) {
+  :root { --margin: 32px; --gutter: 20px; --type-body: 17px; }
+}
+@media (min-width: 1024px) {
+  :root { --margin: 40px; --gutter: 24px; --bands: 4; --nav-h: 72px; --scene-pad: var(--space-9); }
+}
+@media (min-width: 1280px) {
+  :root { --margin: 48px; }
+}
+@media (min-width: 1440px) {
+  :root { --margin: 64px; }
+}
