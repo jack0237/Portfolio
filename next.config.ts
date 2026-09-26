@@ -13,9 +13,29 @@ try {
   cvSize = 0;
 }
 
+// Config Firebase : on réutilise les variables REACT_APP_FIREBASE_* déjà définies
+// dans Vercel pour le site CRA. Next.js n'expose au navigateur que les NEXT_PUBLIC_*,
+// d'où ce relais au build. Un NEXT_PUBLIC_* défini explicitement reste prioritaire.
+const FIREBASE_KEYS = [
+  "API_KEY",
+  "AUTH_DOMAIN",
+  "PROJECT_ID",
+  "STORAGE_BUCKET",
+  "MESSAGING_SENDER_ID",
+  "APP_ID",
+  "MEASUREMENT_ID",
+];
+const firebaseEnv: Record<string, string> = {};
+for (const key of FIREBASE_KEYS) {
+  const value =
+    process.env[`NEXT_PUBLIC_FIREBASE_${key}`] ?? process.env[`REACT_APP_FIREBASE_${key}`];
+  if (value) firebaseEnv[`NEXT_PUBLIC_FIREBASE_${key}`] = value;
+}
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   env: {
+    ...firebaseEnv,
     NEXT_PUBLIC_BUILD_DATE: new Date().toISOString(),
     NEXT_PUBLIC_CV_SIZE: String(cvSize),
   },
