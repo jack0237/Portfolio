@@ -1,19 +1,10 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
-import { fetchCollection, INITIAL_CERTIFICATIONS } from "../../utils/storage";
 import "./Certifications.css";
 import { FiAward, FiClock, FiExternalLink } from "react-icons/fi";
 
-function Certifications() {
-  const [certifications, setCertifications] = useState([]);
-
-  useEffect(() => {
-    fetchCollection("certifications", INITIAL_CERTIFICATIONS).then(data => {
-      setCertifications(data);
-    });
-  }, []);
-
+// Page héritée (refonte à venir). Composant serveur : certifications lues dans l'API par la page
+// (src/lib/api.ts). Aucune donnée de repli : collection vide = état vide.
+/** @param {{ certifications?: import("../../lib/api").Certification[], emptyLabel?: string }} props */
+function Certifications({ certifications = [], emptyLabel = "" }) {
   const completedCerts = certifications.filter(cert => cert.status === 'completed');
   const ongoingCerts = certifications.filter(cert => cert.status === 'ongoing');
 
@@ -82,6 +73,7 @@ function Certifications() {
           </>
         )}
 
+        {certifications.length === 0 && <p className="legacy-empty">{emptyLabel}</p>}
       </div>
     </div>
   );
