@@ -3,7 +3,7 @@ import AdminLoader from "@/components/Admin/AdminLoader";
 import "@/components/legacy.css";
 
 // Admin : noindex, nofollow (SEO 2.2). Non bloqué dans robots.txt pour que Google lise le noindex.
-// Rendu client uniquement, protégé par l'authentification Firebase (règles Firestore inchangées).
+// Rendu client uniquement ; lectures et écritures via l'API (session admin, cookie de api.jack0237.com).
 export const metadata: Metadata = {
   title: "Admin",
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },

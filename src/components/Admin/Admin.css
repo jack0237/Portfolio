@@ -174,3 +174,16 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   vertical-align: middle;
 }
+
+/* Messages de l'admin (succès / erreur des appels à l'API). */
+.admin-notice {
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+.admin-notice.is-ok { color: var(--neon-cyan, #00f0ff); }
+.admin-notice.is-error { color: #ff6b6b; }
+.admin-help { color: var(--on-surface-variant, #b9cacb); }
+.admin-login-box .form-label { display: block; text-align: left; }

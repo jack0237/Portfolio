@@ -1,253 +1,314 @@
 "use client";
 
-// Admin porté tel quel (client uniquement, chargé sans rendu serveur par AdminLoader).
+// Admin du portfolio (client uniquement, chargé sans rendu serveur par AdminLoader).
+// Données et session : API https://api.jack0237.com (src/lib/api.ts, `adminFetch`).
+// - Connexion e-mail + mot de passe (POST /v1/auth/login) : l'API pose le cookie de session
+//   `__Host-portfolio_session` (HttpOnly, SameSite=Strict) sur api.jack0237.com ; chaque requête
+//   l'envoie grâce à `credentials: "include"`. Au chargement, GET /v1/auth/me dit si la session est active.
+// - Écritures : PUT /v1/{collection}/{id} (création ou remplacement), DELETE /v1/{collection}/{id}.
+//   Chaque écriture déclenche côté API la revalidation du site (/api/revalidate).
+// - Images : POST /v1/media (FormData, champ `file`), l'URL renvoyée est stockée dans `image`.
+// Le cookie étant SameSite=Strict, l'admin ne marche que depuis jack0237.com, www.jack0237.com et
+// localhost:3000 (pas depuis une prévisualisation Vercel) : un message l'indique ailleurs.
 // Bootstrap n'est chargé que sur cette page (formulaires react-bootstrap).
 import "bootstrap/dist/css/bootstrap.min.css";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Container, Form, Button, Row, Col, Table } from "react-bootstrap";
-import MDEditor from '@uiw/react-md-editor';
-import { 
-  fetchCollection, 
-  saveDocument,
-  deleteDocument,
-  uploadImage,
-  INITIAL_BLOG_POSTS, 
-  INITIAL_RESUME_EXPERIENCE, 
-  INITIAL_RESUME_SKILLS,
-  INITIAL_CERTIFICATIONS
-} from "../../utils/storage";
-import { auth } from "../../utils/firebase";
-import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "firebase/auth";
+import MDEditor from "@uiw/react-md-editor";
+import { adminFetch, ApiError, ADMIN_ORIGINS } from "../../lib/api";
 import "./Admin.css";
 
 const ADMIN_EMAIL = "jasonngueguim@gmail.com";
 
-function Admin() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("blog"); // 'blog', 'resume', 'skills'
+// Champs acceptés en écriture par l'API (corps strict : tout champ inconnu = 400).
+// `publishedAt` des articles est volontairement omis : l'API le conserve à la mise à jour
+// et le déduit de l'identifiant Date.now() à la création.
+const FIELDS = {
+  blogs: { title: "string", date: "string", readTime: "string", eyebrow: "string", tags: "tags", image: "string", lang: "string", content: "text" },
+  projects: { title: "string", description: "text", image: "string", tags: "tags", category: "string", status: "string", link: "string", sortOrder: "int" },
+  experiences: { title: "string", company: "string", date: "string", description: "text", sortOrder: "int" },
+  skills: { label: "string", level: "int", sortOrder: "int" },
+  certifications: { title: "string", issuer: "string", date: "string", status: "string", link: "string", sortOrder: "int" },
+};
 
-  // Data states
+const LABELS = {
+  blogs: "Article",
+  projects: "Projet",
+  experiences: "Expérience",
+  skills: "Compétence",
+  certifications: "Certification",
+};
+
+/** Corps d'écriture propre : seulement les champs connus, types attendus par l'API. */
+function toPayload(collection, item) {
+  const out = {};
+  for (const [name, type] of Object.entries(FIELDS[collection])) {
+    const v = item[name];
+    if (type === "tags") out[name] = (Array.isArray(v) ? v : []).map((t) => String(t).trim()).filter(Boolean);
+    else if (type === "int") out[name] = Number.isFinite(Number(v)) ? Math.trunc(Number(v)) : 0;
+    else if (type === "text") out[name] = typeof v === "string" ? v : "";
+    else out[name] = typeof v === "string" ? v.trim() : v == null ? "" : String(v);
+  }
+  if (collection === "certifications" && !["completed", "ongoing"].includes(out.status)) out.status = "completed";
+  return out;
+}
+
+const newId = () => Date.now().toString();
+
+function Admin() {
+  const [originOk, setOriginOk] = useState(true);
+  const [status, setStatus] = useState("checking"); // checking | anon | authed
+  const [user, setUser] = useState(null);
+  const [notice, setNotice] = useState(null); // { type: "ok" | "error", text }
+  const [activeTab, setActiveTab] = useState("blog");
+
+  // Formulaire de connexion
+  const [email, setEmail] = useState(ADMIN_EMAIL);
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // Données
   const [blogs, setBlogs] = useState([]);
   const [experiences, setExperiences] = useState([]);
   const [skills, setSkills] = useState([]);
   const [certifications, setCertifications] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [busy, setBusy] = useState(null); // clé "collection:id" de l'opération en cours
 
-  // Local state for tag inputs to fix the "comma bug"
+  // Saisie des tags d'article (chaîne libre, convertie en tableau à chaque frappe)
   const [blogTagInputs, setBlogTagInputs] = useState({});
   const [allExistingTags, setAllExistingTags] = useState([]);
 
-  useEffect(() => {
-    // Sans configuration Firebase (build local sans .env), auth vaut null : écran de connexion inactif.
-    if (!auth) {
-      setLoading(false);
-      return undefined;
-    }
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser && currentUser.email === ADMIN_EMAIL) {
-        setUser(currentUser);
-        loadAdminData();
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
+  const setters = { blogs: setBlogs, projects: setProjects, experiences: setExperiences, skills: setSkills, certifications: setCertifications };
 
-    return () => unsubscribe();
-  }, []);
+  const say = (type, text) => setNotice({ type, text });
 
-  const loadAdminData = async () => {
-    const blogData = await fetchCollection("blogs", INITIAL_BLOG_POSTS);
-    setBlogs(blogData);
-    setExperiences(await fetchCollection("experiences", INITIAL_RESUME_EXPERIENCE));
-    setSkills(await fetchCollection("skills", INITIAL_RESUME_SKILLS));
-    setCertifications(await fetchCollection("certifications", INITIAL_CERTIFICATIONS));
-    setProjects(await fetchCollection("projects", []));
-
-    // Initialize tag inputs and history
-    const tagMap = {};
-    const tagsSet = new Set();
-    blogData.forEach(blog => {
-      tagMap[blog.id] = (blog.tags || []).join(", ");
-      if (blog.tags) blog.tags.forEach(t => tagsSet.add(t));
-    });
-    setBlogTagInputs(tagMap);
-    setAllExistingTags(Array.from(tagsSet).sort());
-  };
-
-
-  const handleLogin = async () => {
-    if (!auth) {
-      alert("Firebase is not configured on this deployment.");
+  /** Erreur d'API commune : session expirée = retour à l'écran de connexion. */
+  const handleError = useCallback((err, context) => {
+    if (err instanceof ApiError && err.status === 401) {
+      setUser(null);
+      setStatus("anon");
+      say("error", "Session expirée : reconnectez-vous.");
       return;
     }
-    const provider = new GoogleAuthProvider();
+    const msg = err instanceof ApiError ? err.message : String(err);
+    say("error", `${context} : ${msg}`);
+  }, []);
+
+  const loadAdminData = useCallback(async () => {
     try {
-      const result = await signInWithPopup(auth, provider);
-      if (result.user.email !== ADMIN_EMAIL) {
-        await signOut(auth);
-        alert("Unauthorized Access: This terminal is restricted to the system administrator.");
-      }
-    } catch (error) {
-      console.error("Login failed:", error);
-      alert("Login failed. Please try again.");
+      const [b, e, s, c, p] = await Promise.all([
+        adminFetch("/v1/blogs?limit=500&withContent=true"),
+        adminFetch("/v1/experiences?limit=500"),
+        adminFetch("/v1/skills?limit=500"),
+        adminFetch("/v1/certifications?limit=500"),
+        adminFetch("/v1/projects?limit=500"),
+      ]);
+      const blogData = b.items || [];
+      setBlogs(blogData);
+      setExperiences(e.items || []);
+      setSkills(s.items || []);
+      setCertifications(c.items || []);
+      setProjects(p.items || []);
+
+      const tagMap = {};
+      const tagsSet = new Set();
+      blogData.forEach((blog) => {
+        tagMap[blog.id] = (blog.tags || []).join(", ");
+        (blog.tags || []).forEach((t) => tagsSet.add(t));
+      });
+      setBlogTagInputs(tagMap);
+      setAllExistingTags(Array.from(tagsSet).sort());
+    } catch (err) {
+      handleError(err, "Chargement des données impossible");
+    }
+  }, [handleError]);
+
+  useEffect(() => {
+    if (!ADMIN_ORIGINS.includes(window.location.origin)) {
+      setOriginOk(false);
+      return undefined;
+    }
+    let alive = true;
+    adminFetch("/v1/auth/me")
+      .then((res) => {
+        if (!alive) return;
+        setUser(res.user);
+        setStatus("authed");
+        loadAdminData();
+      })
+      .catch((err) => {
+        if (!alive) return;
+        setStatus("anon");
+        if (!(err instanceof ApiError && err.status === 401)) say("error", err.message);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [loadAdminData]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setNotice(null);
+    try {
+      const res = await adminFetch("/v1/auth/login", { method: "POST", body: { email: email.trim(), password } });
+      setPassword("");
+      setUser(res.user);
+      setStatus("authed");
+      loadAdminData();
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) say("error", "Identifiants invalides.");
+      else if (err instanceof ApiError && err.status === 429) say("error", "Trop de tentatives. Réessayez dans quelques minutes.");
+      else say("error", err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-      setUser(null);
-    } catch (error) {
-      console.error("Logout failed:", error);
+      await adminFetch("/v1/auth/logout", { method: "POST" });
+    } catch {
+      // Session déjà invalide ou API injoignable : on quitte l'interface quand même.
+    }
+    setUser(null);
+    setStatus("anon");
+    setNotice(null);
+  };
+
+  // ------------------------------------------------------------------ écritures génériques
+
+  const saveItem = async (collection, item) => {
+    setBusy(`${collection}:${item.id}`);
+    try {
+      const res = await adminFetch(`/v1/${collection}/${encodeURIComponent(item.id)}`, {
+        method: "PUT",
+        body: toPayload(collection, item),
+      });
+      // L'API renvoie l'élément normalisé (createdAt, updatedAt, publishedAt...).
+      setters[collection]((list) => list.map((x) => (x.id === item.id ? res.item : x)));
+      say("ok", `${LABELS[collection]} : enregistrement effectué.`);
+    } catch (err) {
+      handleError(err, `${LABELS[collection]} non enregistré`);
+    } finally {
+      setBusy(null);
     }
   };
 
-  // Adding generic items (local state only, saved remotely upon SAVE button press)
+  const deleteItem = async (collection, id) => {
+    if (!window.confirm(`Supprimer définitivement cet élément (${LABELS[collection]}) ?`)) return;
+    setBusy(`${collection}:${id}`);
+    try {
+      await adminFetch(`/v1/${collection}/${encodeURIComponent(id)}`, { method: "DELETE" });
+    } catch (err) {
+      // 404 : élément jamais enregistré (créé seulement dans l'interface), on le retire quand même.
+      if (!(err instanceof ApiError && err.status === 404)) {
+        handleError(err, "Suppression impossible");
+        setBusy(null);
+        return;
+      }
+    }
+    setters[collection]((list) => list.filter((x) => x.id !== id));
+    say("ok", `${LABELS[collection]} : suppression effectuée.`);
+    setBusy(null);
+  };
+
+  const updateLocal = (collection, id, field, value) => {
+    setters[collection]((list) => list.map((x) => (x.id === id ? { ...x, [field]: value } : x)));
+  };
+
+  const uploadImage = async (e, collection, id) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    setBusy(`${collection}:${id}`);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await adminFetch("/v1/media", { method: "POST", body: form });
+      updateLocal(collection, id, "image", res.url);
+      say("ok", "Image envoyée. Pensez à enregistrer l'élément (SAVE).");
+    } catch (err) {
+      handleError(err, "Envoi de l'image impossible");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  // ------------------------------------------------------------------ ajouts (locaux jusqu'à SAVE)
+
   const addBlog = () => {
-    const newBlog = { id: Date.now().toString(), title: "NEW ENTRY", date: "TODAY", readTime: "0 MIN", eyebrow: "Category", image: "", content: "New Content...", tags: ["#RESEARCH"] };
-    setBlogs([newBlog, ...blogs]);
+    const id = newId();
+    setBlogs([{ id, title: "NEW ENTRY", date: "", readTime: "", eyebrow: "", image: "", lang: "fr", content: "", tags: [] }, ...blogs]);
+    setBlogTagInputs((prev) => ({ ...prev, [id]: "" }));
   };
-  const addExperience = () => {
-    const newExp = { id: Date.now().toString(), title: "New Role", company: "Company", date: "YEAR - YEAR", description: "Responsibilities..." };
-    setExperiences([newExp, ...experiences]);
-  };
-  const addSkill = () => {
-    const newSkill = { id: Date.now().toString(), label: "New Skill", level: 1 };
-    setSkills([...skills, newSkill]);
-  };
-  const addCert = () => {
-    const newCert = { id: Date.now().toString(), title: "New Certificate", issuer: "Issuer Name", date: "Year", status: "completed", link: "" };
-    setCertifications([newCert, ...certifications]);
-  };
-
-  const addProject = () => {
-    const newProj = { id: Date.now().toString(), title: "New Project", description: "Project description...", image: "", tags: ["React"], category: "Web Design", status: "In Progress", link: "" };
-    setProjects([newProj, ...projects]);
-  };
-
-  // Delete generic items (local and remote)
-  const handleDeleteBlog = async (id) => {
-    setBlogs(blogs.filter(b => b.id !== id));
-    await deleteDocument("blogs", id);
-  };
-  const handleDeleteExperience = async (id) => {
-    setExperiences(experiences.filter(e => e.id !== id));
-    await deleteDocument("experiences", id);
-  };
-  const handleDeleteSkill = async (id) => {
-    setSkills(skills.filter(s => s.id !== id));
-    await deleteDocument("skills", id);
-  };
-  const handleDeleteCert = async (id) => {
-    setCertifications(certifications.filter(c => c.id !== id));
-    await deleteDocument("certifications", id);
-  };
-
-  const handleDeleteProject = async (id) => {
-    setProjects(projects.filter(p => p.id !== id));
-    await deleteDocument("projects", id);
-  };
-
-  // Update local state without pushing to DB yet
-  const updateBlogLocal = (id, field, value) => {
-    setBlogs(blogs.map(b => (b.id === id ? { ...b, [field]: value } : b)));
-  };
+  const addExperience = () =>
+    setExperiences([{ id: newId(), title: "New Role", company: "", date: "", description: "", sortOrder: 0 }, ...experiences]);
+  const addSkill = () => setSkills([...skills, { id: newId(), label: "New Skill", level: 1, sortOrder: skills.length }]);
+  const addCert = () =>
+    setCertifications([{ id: newId(), title: "New Certificate", issuer: "", date: "", status: "completed", link: "", sortOrder: 0 }, ...certifications]);
+  const addProject = () =>
+    setProjects([{ id: newId(), title: "New Project", description: "", image: "", tags: [], category: "Web Design", status: "In Progress", link: "", sortOrder: 0 }, ...projects]);
 
   const handleBlogTagChange = (id, value) => {
     const upperValue = value.toUpperCase();
-    // Update the visual input string immediately in uppercase
-    setBlogTagInputs(prev => ({ ...prev, [id]: upperValue }));
-
-    // Update the actual blog object tags array
-    const tagsArray = upperValue.split(',')
-      .map(tag => {
-        let t = tag.trim();
-        if (t && !t.startsWith('#')) t = '#' + t;
-        return t; // Already uppercased above
+    setBlogTagInputs((prev) => ({ ...prev, [id]: upperValue }));
+    const tagsArray = upperValue
+      .split(",")
+      .map((tag) => {
+        const t = tag.trim();
+        return t && !t.startsWith("#") ? `#${t}` : t;
       })
-      .filter(t => t !== "");
-    
-    updateBlogLocal(id, "tags", tagsArray);
-
-    // Refresh history suggestions based on current tags in all blogs
+      .filter((t) => t !== "");
+    updateLocal("blogs", id, "tags", tagsArray);
     const tagsSet = new Set(allExistingTags);
-    tagsArray.forEach(t => tagsSet.add(t));
+    tagsArray.forEach((t) => tagsSet.add(t));
     setAllExistingTags(Array.from(tagsSet).sort());
   };
 
-  const handleImageUpload = async (e, blogId) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-      const url = await uploadImage(file, `blog-images/${blogId}_${file.name}`);
-      if (url) {
-        updateBlogLocal(blogId, "image", url);
-        alert("Image uploaded successfully! Remember to click SAVE TO FIRESTORE.");
-      }
-    } catch (err) {
-      alert("Failed to upload image.");
-    }
-  };
-
-  const updateExperienceLocal = (id, field, value) => {
-    setExperiences(experiences.map(e => (e.id === id ? { ...e, [field]: value } : e)));
-  };
-  const updateSkillLocal = (id, field, value) => {
-    setSkills(skills.map(s => (s.id === id ? { ...s, [field]: field === "level" ? parseInt(value) || 0 : value } : s)));
-  };
-  const updateCertLocal = (id, field, value) => {
-    setCertifications(certifications.map(c => (c.id === id ? { ...c, [field]: value } : c)));
-  };
-
-  const updateProjectLocal = (id, field, value) => {
-    setProjects(projects.map(p => (p.id === id ? { ...p, [field]: value } : p)));
-  };
-
   const handleProjectTagChange = (id, tagString) => {
-    const tags = tagString.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
-    updateProjectLocal(id, "tags", tags);
+    updateLocal("projects", id, "tags", tagString.split(",").map((t) => t.trim()).filter((t) => t !== ""));
   };
 
-  const handleProjectImageUpload = async (e, projId) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-      const url = await uploadImage(file, `project-images/${projId}_${file.name}`);
-      if (url) {
-        updateProjectLocal(projId, "image", url);
-        alert("Image uploaded successfully!");
-      }
-    } catch (err) {
-      alert("Failed to upload image.");
-    }
-  };
+  const isBusy = (collection, id) => busy === `${collection}:${id}`;
 
-  // Push individual item to DB
-  const saveBlogToDB = async (blog) => {
-    await saveDocument("blogs", blog.id, blog);
-    alert("Blog Post Saved successfully!");
-  };
-  const saveExperienceToDB = async (exp) => {
-    await saveDocument("experiences", exp.id, exp);
-    alert("Experience Saved successfully!");
-  };
-  const saveSkillToDB = async (skill) => {
-    await saveDocument("skills", skill.id, skill);
-  };
-  const saveCertToDB = async (cert) => {
-    await saveDocument("certifications", cert.id, cert);
-    alert("Certification Saved successfully!");
-  };
+  const imagePreview = (image) =>
+    image && /^https?:\/\//.test(image) ? (
+      <div style={{ width: "40px", height: "40px", overflow: "hidden", borderRadius: "4px", border: "1px solid var(--neon-cyan)", flexShrink: 0 }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={image} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      </div>
+    ) : null;
 
-  const saveProjectToDB = async (proj) => {
-    await saveDocument("projects", proj.id, proj);
-    alert("Project Saved successfully!");
-  };
+  const noticeBox = notice && (
+    <div role={notice.type === "error" ? "alert" : "status"} className={`admin-notice ${notice.type === "error" ? "is-error" : "is-ok"}`}>
+      {notice.text}
+    </div>
+  );
 
+  // ------------------------------------------------------------------ écrans
 
-  if (loading) {
+  if (!originOk) {
+    return (
+      <div className="admin-login-page page-transition">
+        <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: "80vh" }}>
+          <div className="admin-login-box">
+            <h2 className="admin-heading mb-4">ADMIN INDISPONIBLE ICI</h2>
+            <p className="mb-4 text-center admin-help">
+              L&apos;administration ne fonctionne que sur jack0237.com : la session de l&apos;API
+              n&apos;est pas transmise depuis une prévisualisation ou un autre domaine.
+            </p>
+            <a className="admin-btn w-100 d-block text-center" href="https://jack0237.com/admin">
+              OUVRIR JACK0237.COM/ADMIN
+            </a>
+          </div>
+        </Container>
+      </div>
+    );
+  }
+
+  if (status === "checking") {
     return (
       <div className="admin-login-page page-transition d-flex justify-content-center align-items-center" style={{ minHeight: "80vh" }}>
         <h2 className="admin-heading">VERIFYING CREDENTIALS...</h2>
@@ -259,16 +320,30 @@ function Admin() {
     return (
       <div className="admin-login-page page-transition">
         <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: "80vh" }}>
-          <div className="admin-login-box">
+          <form className="admin-login-box" onSubmit={handleLogin}>
             <h2 className="admin-heading mb-4">SYSTEM ADMIN TERMINAL</h2>
             <p className="text-muted mb-4 text-center">ACCESS RESTRICTED TO SYSTEM ADMINISTRATOR ONLY</p>
-            <Button onClick={handleLogin} className="admin-btn mt-2 w-100 d-flex align-items-center justify-content-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-google" viewBox="0 0 16 16">
-                <path d="M15.545 6.558a9.42 9.42 0 0 1 .139 1.626c0 2.434-.87 4.492-2.384 5.885h.002C11.978 15.292 10.158 16 8 16A8 8 0 1 1 8 0c2.158 0 3.92.737 5.358 2.138l-2.851 2.851C9.747 4.221 8.993 3.999 8 3.999c-1.934 0-3.583 1.309-4.169 3.08a4.99 4.99 0 0 0 0 3.839c.586 1.771 2.235 3.08 4.169 3.08 1.133 0 2.091-.3 2.768-.813.79-.597 1.305-1.464 1.458-2.583H8.001V6.558h7.544z"/>
-              </svg>
-              INITIALIZE GOOGLE CONNECTION
+            {noticeBox}
+            <Form.Group className="mb-3" controlId="admin-email">
+              <Form.Label>E-mail</Form.Label>
+              <Form.Control type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} className="admin-input" />
+            </Form.Group>
+            <Form.Group className="mb-3" controlId="admin-password">
+              <Form.Label>Mot de passe</Form.Label>
+              <Form.Control
+                type="password"
+                autoComplete="current-password"
+                required
+                autoFocus
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="admin-input"
+              />
+            </Form.Group>
+            <Button type="submit" disabled={submitting} className="admin-btn mt-2 w-100">
+              {submitting ? "CONNEXION..." : "SE CONNECTER"}
             </Button>
-          </div>
+          </form>
         </Container>
       </div>
     );
@@ -277,14 +352,15 @@ function Admin() {
   return (
     <div className="admin-page page-transition">
       <Container style={{ paddingTop: "120px", paddingBottom: "100px" }}>
-        
-        <div className="d-flex justify-content-between align-items-center mb-5">
+        <div className="d-flex justify-content-between align-items-center mb-5 flex-wrap gap-3">
           <h1 className="admin-main-title">COMMAND <span className="accent-text">CENTER</span></h1>
           <div className="d-flex align-items-center gap-3">
-             <span className="text-muted" style={{fontSize: '0.8rem'}}>ADMIN: {user.email}</span>
-             <button className="admin-btn-logout" onClick={handleLogout}>TERMINATE SESSION</button>
+            <span className="text-muted" style={{ fontSize: "0.8rem" }}>ADMIN: {user.email}</span>
+            <button className="admin-btn-logout" onClick={handleLogout}>TERMINATE SESSION</button>
           </div>
         </div>
+
+        {noticeBox}
 
         {/* Tab Navigation */}
         <div className="admin-tabs mb-4">
@@ -296,47 +372,47 @@ function Admin() {
         </div>
 
         <div className="admin-content-card">
-          
           {/* BLOG MANAGEMENT TAB */}
           {activeTab === "blog" && (
             <div>
               <div className="d-flex justify-content-between mb-4">
-                <h3 className="admin-section-title">Blog Entries (Blogs Collection)</h3>
+                <h3 className="admin-section-title">Blog Entries ({blogs.length})</h3>
                 <button className="admin-btn" onClick={addBlog}>+ NEW ENTRY</button>
               </div>
-              
+              {blogs.length === 0 && <p className="text-muted">Aucun article.</p>}
+
               {blogs.map((blog) => (
                 <div key={blog.id} className="admin-item-block mb-4">
                   <Row>
                     <Col md={6}>
                       <Form.Group className="mb-2">
                         <Form.Label>Title</Form.Label>
-                        <Form.Control type="text" value={blog.title} onChange={(e) => updateBlogLocal(blog.id, "title", e.target.value)} className="admin-input" />
+                        <Form.Control type="text" value={blog.title || ""} onChange={(e) => updateLocal("blogs", blog.id, "title", e.target.value)} className="admin-input" />
                       </Form.Group>
                     </Col>
                     <Col md={3}>
                       <Form.Group className="mb-2">
                         <Form.Label>Date</Form.Label>
-                        <Form.Control type="text" value={blog.date} onChange={(e) => updateBlogLocal(blog.id, "date", e.target.value)} className="admin-input" />
+                        <Form.Control type="text" value={blog.date || ""} onChange={(e) => updateLocal("blogs", blog.id, "date", e.target.value)} className="admin-input" />
                       </Form.Group>
                     </Col>
                     <Col md={3}>
                       <Form.Group className="mb-2">
                         <Form.Label>Category/Eyebrow</Form.Label>
-                        <Form.Control type="text" value={blog.eyebrow} onChange={(e) => updateBlogLocal(blog.id, "eyebrow", e.target.value)} className="admin-input" />
+                        <Form.Control type="text" value={blog.eyebrow || ""} onChange={(e) => updateLocal("blogs", blog.id, "eyebrow", e.target.value)} className="admin-input" />
                       </Form.Group>
                     </Col>
                   </Row>
                   <Row>
-                    <Col md={12}>
-                       <Form.Group className="mb-2">
+                    <Col md={8}>
+                      <Form.Group className="mb-2">
                         <Form.Label>Tags (Comma separated, e.g. #AI, #WEB3)</Form.Label>
-                        <Form.Control 
-                          type="text" 
+                        <Form.Control
+                          type="text"
                           list="tag-history"
-                          value={blogTagInputs[blog.id] || ""} 
-                          onChange={(e) => handleBlogTagChange(blog.id, e.target.value)} 
-                          className="admin-input" 
+                          value={blogTagInputs[blog.id] ?? (blog.tags || []).join(", ")}
+                          onChange={(e) => handleBlogTagChange(blog.id, e.target.value)}
+                          className="admin-input"
                           placeholder="#RESEARCH, #DESIGN, #AI"
                         />
                         <datalist id="tag-history">
@@ -346,16 +422,25 @@ function Admin() {
                         </datalist>
                       </Form.Group>
                     </Col>
+                    <Col md={2}>
+                      <Form.Group className="mb-2">
+                        <Form.Label>Read time</Form.Label>
+                        <Form.Control type="text" value={blog.readTime ?? ""} onChange={(e) => updateLocal("blogs", blog.id, "readTime", e.target.value)} className="admin-input" />
+                      </Form.Group>
+                    </Col>
+                    <Col md={2}>
+                      <Form.Group className="mb-2">
+                        <Form.Label>Lang (fr, en)</Form.Label>
+                        <Form.Control type="text" value={blog.lang || ""} onChange={(e) => updateLocal("blogs", blog.id, "lang", e.target.value)} className="admin-input" />
+                      </Form.Group>
+                    </Col>
                   </Row>
                   <Form.Group className="mb-2">
-                    <Form.Label>Cover Image (Upload to Firebase Storage)</Form.Label>
-                    <div className="d-flex align-items-center gap-3">
-                      <Form.Control type="file" accept="image/*" onChange={(e) => handleImageUpload(e, blog.id)} className="admin-input flex-grow-1" />
-                      {blog.image && blog.image.startsWith('http') && (
-                        <div style={{width: "40px", height: "40px", overflow: 'hidden', borderRadius: '4px', border: '1px solid var(--neon-cyan)'}}>
-                           <img src={blog.image} alt="preview" style={{width: "100%", height: "100%", objectFit: "cover"}} />
-                        </div>
-                      )}
+                    <Form.Label>Cover Image (upload, URL or legacy key blogImg1/2/3)</Form.Label>
+                    <div className="d-flex align-items-center gap-3 flex-wrap">
+                      <Form.Control type="text" aria-label="Image URL" value={blog.image || ""} onChange={(e) => updateLocal("blogs", blog.id, "image", e.target.value)} className="admin-input flex-grow-1" style={{ minWidth: "220px", width: "auto" }} />
+                      <Form.Control type="file" aria-label="Upload image" accept="image/jpeg,image/png,image/gif,image/webp,image/avif" disabled={isBusy("blogs", blog.id)} onChange={(e) => uploadImage(e, "blogs", blog.id)} className="admin-input" style={{ maxWidth: "320px" }} />
+                      {imagePreview(blog.image)}
                     </div>
                   </Form.Group>
                   <Form.Group className="mb-2">
@@ -363,16 +448,19 @@ function Admin() {
                     <div data-color-mode="dark">
                       <MDEditor
                         value={blog.content || ""}
-                        onChange={(val) => updateBlogLocal(blog.id, "content", val || "")}
+                        onChange={(val) => updateLocal("blogs", blog.id, "content", val || "")}
                         preview="edit"
                         height={300}
-                        style={{ backgroundColor: 'var(--midnight-charcoal)', border: '1px solid var(--neon-cyan)' }}
+                        style={{ backgroundColor: "var(--midnight-charcoal)", border: "1px solid var(--neon-cyan)" }}
                       />
                     </div>
                   </Form.Group>
-                  <div className="mt-3">
-                    <button className="admin-btn me-2" onClick={() => saveBlogToDB(blog)}>SAVE TO FIRESTORE</button>
-                    <button className="admin-btn-danger" onClick={() => handleDeleteBlog(blog.id)}>DELETE ENTRY</button>
+                  <div className="mt-3 d-flex align-items-center flex-wrap gap-2">
+                    <button className="admin-btn" disabled={isBusy("blogs", blog.id)} onClick={() => saveItem("blogs", blog)}>SAVE</button>
+                    <button className="admin-btn-danger" disabled={isBusy("blogs", blog.id)} onClick={() => deleteItem("blogs", blog.id)}>DELETE ENTRY</button>
+                    <a className="ms-2" style={{ fontSize: "0.8rem" }} href={`/blog/${encodeURIComponent(blog.id)}`} target="_blank" rel="noreferrer">
+                      /blog/{blog.id}
+                    </a>
                   </div>
                 </div>
               ))}
@@ -383,39 +471,46 @@ function Admin() {
           {activeTab === "resume" && (
             <div>
               <div className="d-flex justify-content-between mb-4">
-                <h3 className="admin-section-title">Experience Cards (Experiences Collection)</h3>
+                <h3 className="admin-section-title">Experience Cards ({experiences.length})</h3>
                 <button className="admin-btn" onClick={addExperience}>+ NEW ROLE</button>
               </div>
-              
+              {experiences.length === 0 && <p className="text-muted">Aucune expérience.</p>}
+
               {experiences.map((exp) => (
                 <div key={exp.id} className="admin-item-block mb-4">
                   <Row>
                     <Col md={4}>
                       <Form.Group className="mb-2">
                         <Form.Label>Role Title</Form.Label>
-                        <Form.Control type="text" value={exp.title} onChange={(e) => updateExperienceLocal(exp.id, "title", e.target.value)} className="admin-input" />
+                        <Form.Control type="text" value={exp.title || ""} onChange={(e) => updateLocal("experiences", exp.id, "title", e.target.value)} className="admin-input" />
                       </Form.Group>
                     </Col>
-                    <Col md={4}>
+                    <Col md={3}>
                       <Form.Group className="mb-2">
                         <Form.Label>Company</Form.Label>
-                        <Form.Control type="text" value={exp.company} onChange={(e) => updateExperienceLocal(exp.id, "company", e.target.value)} className="admin-input" />
+                        <Form.Control type="text" value={exp.company || ""} onChange={(e) => updateLocal("experiences", exp.id, "company", e.target.value)} className="admin-input" />
                       </Form.Group>
                     </Col>
-                    <Col md={4}>
+                    <Col md={3}>
                       <Form.Group className="mb-2">
                         <Form.Label>Date Range</Form.Label>
-                        <Form.Control type="text" value={exp.date} onChange={(e) => updateExperienceLocal(exp.id, "date", e.target.value)} className="admin-input" />
+                        <Form.Control type="text" value={exp.date || ""} onChange={(e) => updateLocal("experiences", exp.id, "date", e.target.value)} className="admin-input" />
+                      </Form.Group>
+                    </Col>
+                    <Col md={2}>
+                      <Form.Group className="mb-2">
+                        <Form.Label>Order</Form.Label>
+                        <Form.Control type="number" value={exp.sortOrder ?? 0} onChange={(e) => updateLocal("experiences", exp.id, "sortOrder", e.target.value)} className="admin-input" />
                       </Form.Group>
                     </Col>
                   </Row>
                   <Form.Group className="mb-2">
                     <Form.Label>Description Content</Form.Label>
-                    <Form.Control as="textarea" rows={4} value={exp.description} onChange={(e) => updateExperienceLocal(exp.id, "description", e.target.value)} className="admin-input" />
+                    <Form.Control as="textarea" rows={4} value={exp.description || ""} onChange={(e) => updateLocal("experiences", exp.id, "description", e.target.value)} className="admin-input" />
                   </Form.Group>
                   <div className="mt-3">
-                    <button className="admin-btn me-2" onClick={() => saveExperienceToDB(exp)}>SAVE TO FIRESTORE</button>
-                    <button className="admin-btn-danger" onClick={() => handleDeleteExperience(exp.id)}>DELETE ROLE</button>
+                    <button className="admin-btn me-2" disabled={isBusy("experiences", exp.id)} onClick={() => saveItem("experiences", exp)}>SAVE</button>
+                    <button className="admin-btn-danger" disabled={isBusy("experiences", exp.id)} onClick={() => deleteItem("experiences", exp.id)}>DELETE ROLE</button>
                   </div>
                 </div>
               ))}
@@ -425,36 +520,43 @@ function Admin() {
           {/* SKILL MATRIX TAB */}
           {activeTab === "skills" && (
             <div>
-               <div className="d-flex justify-content-between mb-4">
-                <h3 className="admin-section-title">Technical Proficiency (Skills Collection)</h3>
+              <div className="d-flex justify-content-between mb-4">
+                <h3 className="admin-section-title">Technical Proficiency ({skills.length})</h3>
                 <button className="admin-btn" onClick={addSkill}>+ NEW SKILL</button>
               </div>
+              {skills.length === 0 && <p className="text-muted">Aucune compétence.</p>}
 
-              <Table variant="dark" className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Skill Label</th>
-                    <th width="150">Level (0-6)</th>
-                    <th width="200">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {skills.map((skill) => (
-                    <tr key={skill.id}>
-                      <td>
-                        <Form.Control type="text" value={skill.label} onChange={(e) => updateSkillLocal(skill.id, "label", e.target.value)} className="admin-input" />
-                      </td>
-                      <td>
-                        <Form.Control type="number" min="0" max="6" value={skill.level} onChange={(e) => updateSkillLocal(skill.id, "level", e.target.value)} className="admin-input" />
-                      </td>
-                      <td className="d-flex gap-2">
-                         <button className="admin-btn py-1 px-2" style={{fontSize: '0.8rem'}} onClick={() => saveSkillToDB(skill)}>SAVE</button>
-                         <button className="admin-btn-danger py-1 px-2" onClick={() => handleDeleteSkill(skill.id)}>DEL</button>
-                      </td>
+              {skills.length > 0 && (
+                <Table variant="dark" className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Skill Label</th>
+                      <th width="130">Level (0-6)</th>
+                      <th width="110">Order</th>
+                      <th width="200">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </Table>
+                  </thead>
+                  <tbody>
+                    {skills.map((skill) => (
+                      <tr key={skill.id}>
+                        <td>
+                          <Form.Control type="text" aria-label="Skill label" value={skill.label || ""} onChange={(e) => updateLocal("skills", skill.id, "label", e.target.value)} className="admin-input" />
+                        </td>
+                        <td>
+                          <Form.Control type="number" aria-label="Level" min="0" max="6" value={skill.level ?? 0} onChange={(e) => updateLocal("skills", skill.id, "level", e.target.value)} className="admin-input" />
+                        </td>
+                        <td>
+                          <Form.Control type="number" aria-label="Order" value={skill.sortOrder ?? 0} onChange={(e) => updateLocal("skills", skill.id, "sortOrder", e.target.value)} className="admin-input" />
+                        </td>
+                        <td className="d-flex gap-2">
+                          <button className="admin-btn py-1 px-2" style={{ fontSize: "0.8rem" }} disabled={isBusy("skills", skill.id)} onClick={() => saveItem("skills", skill)}>SAVE</button>
+                          <button className="admin-btn-danger py-1 px-2" disabled={isBusy("skills", skill.id)} onClick={() => deleteItem("skills", skill.id)}>DEL</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
             </div>
           )}
 
@@ -462,23 +564,24 @@ function Admin() {
           {activeTab === "projects" && (
             <div>
               <div className="d-flex justify-content-between mb-4">
-                <h3 className="admin-section-title">Project Showcase (Projects Collection)</h3>
+                <h3 className="admin-section-title">Project Showcase ({projects.length})</h3>
                 <button className="admin-btn" onClick={addProject}>+ NEW PROJECT</button>
               </div>
-              
+              {projects.length === 0 && <p className="text-muted">Aucun projet.</p>}
+
               {projects.map((proj) => (
                 <div key={proj.id} className="admin-item-block mb-4">
                   <Row>
-                    <Col md={6}>
+                    <Col md={4}>
                       <Form.Group className="mb-2">
                         <Form.Label>Project Title</Form.Label>
-                        <Form.Control type="text" value={proj.title} onChange={(e) => updateProjectLocal(proj.id, "title", e.target.value)} className="admin-input" />
+                        <Form.Control type="text" value={proj.title || ""} onChange={(e) => updateLocal("projects", proj.id, "title", e.target.value)} className="admin-input" />
                       </Form.Group>
                     </Col>
                     <Col md={2}>
                       <Form.Group className="mb-2">
                         <Form.Label>Category</Form.Label>
-                        <Form.Select value={proj.category} onChange={(e) => updateProjectLocal(proj.id, "category", e.target.value)} className="admin-input">
+                        <Form.Select value={proj.category || "Web Design"} onChange={(e) => updateLocal("projects", proj.id, "category", e.target.value)} className="admin-input">
                           <option value="Web Design">Web Design</option>
                           <option value="Full-Stack">Full-Stack</option>
                           <option value="AI/ML">AI/ML</option>
@@ -488,47 +591,45 @@ function Admin() {
                     <Col md={2}>
                       <Form.Group className="mb-2">
                         <Form.Label>Status</Form.Label>
-                        <Form.Select value={proj.status} onChange={(e) => updateProjectLocal(proj.id, "status", e.target.value)} className="admin-input">
+                        <Form.Select value={proj.status || "In Progress"} onChange={(e) => updateLocal("projects", proj.id, "status", e.target.value)} className="admin-input">
                           <option value="In Progress">In Progress</option>
                           <option value="Done">Done</option>
                           <option value="Released">Released</option>
                         </Form.Select>
                       </Form.Group>
                     </Col>
-                    <Col md={2}>
-                       <Form.Group className="mb-2">
-                        <Form.Label>Project Link</Form.Label>
-                        <Form.Control type="text" value={proj.link} onChange={(e) => updateProjectLocal(proj.id, "link", e.target.value)} className="admin-input" />
+                    <Col md={3}>
+                      <Form.Group className="mb-2">
+                        <Form.Label>Project Link (https://...)</Form.Label>
+                        <Form.Control type="url" value={proj.link || ""} onChange={(e) => updateLocal("projects", proj.id, "link", e.target.value)} className="admin-input" />
+                      </Form.Group>
+                    </Col>
+                    <Col md={1}>
+                      <Form.Group className="mb-2">
+                        <Form.Label>Order</Form.Label>
+                        <Form.Control type="number" value={proj.sortOrder ?? 0} onChange={(e) => updateLocal("projects", proj.id, "sortOrder", e.target.value)} className="admin-input" />
                       </Form.Group>
                     </Col>
                   </Row>
                   <Form.Group className="mb-2">
                     <Form.Label>Tags (Comma separated)</Form.Label>
-                    <Form.Control 
-                      type="text" 
-                      value={(proj.tags || []).join(', ')} 
-                      onChange={(e) => handleProjectTagChange(proj.id, e.target.value)} 
-                      className="admin-input" 
-                    />
+                    <Form.Control type="text" value={(proj.tags || []).join(", ")} onChange={(e) => handleProjectTagChange(proj.id, e.target.value)} className="admin-input" />
                   </Form.Group>
                   <Form.Group className="mb-2">
                     <Form.Label>Description</Form.Label>
-                    <Form.Control as="textarea" rows={3} value={proj.description} onChange={(e) => updateProjectLocal(proj.id, "description", e.target.value)} className="admin-input" />
+                    <Form.Control as="textarea" rows={3} value={proj.description || ""} onChange={(e) => updateLocal("projects", proj.id, "description", e.target.value)} className="admin-input" />
                   </Form.Group>
                   <Form.Group className="mb-2">
-                    <Form.Label>Project Image</Form.Label>
-                    <div className="d-flex align-items-center gap-3">
-                      <Form.Control type="file" accept="image/*" onChange={(e) => handleProjectImageUpload(e, proj.id)} className="admin-input flex-grow-1" />
-                      {proj.image && proj.image.startsWith('http') && (
-                        <div style={{width: "40px", height: "40px", overflow: 'hidden', borderRadius: '4px', border: '1px solid var(--neon-cyan)'}}>
-                           <img src={proj.image} alt="preview" style={{width: "100%", height: "100%", objectFit: "cover"}} />
-                        </div>
-                      )}
+                    <Form.Label>Project Image (upload or URL)</Form.Label>
+                    <div className="d-flex align-items-center gap-3 flex-wrap">
+                      <Form.Control type="text" aria-label="Image URL" value={proj.image || ""} onChange={(e) => updateLocal("projects", proj.id, "image", e.target.value)} className="admin-input flex-grow-1" style={{ minWidth: "220px", width: "auto" }} />
+                      <Form.Control type="file" aria-label="Upload image" accept="image/jpeg,image/png,image/gif,image/webp,image/avif" disabled={isBusy("projects", proj.id)} onChange={(e) => uploadImage(e, "projects", proj.id)} className="admin-input" style={{ maxWidth: "320px" }} />
+                      {imagePreview(proj.image)}
                     </div>
                   </Form.Group>
                   <div className="mt-3">
-                    <button className="admin-btn me-2" onClick={() => saveProjectToDB(proj)}>SAVE TO FIRESTORE</button>
-                    <button className="admin-btn-danger" onClick={() => handleDeleteProject(proj.id)}>DELETE PROJECT</button>
+                    <button className="admin-btn me-2" disabled={isBusy("projects", proj.id)} onClick={() => saveItem("projects", proj)}>SAVE</button>
+                    <button className="admin-btn-danger" disabled={isBusy("projects", proj.id)} onClick={() => deleteItem("projects", proj.id)}>DELETE PROJECT</button>
                   </div>
                 </div>
               ))}
@@ -539,35 +640,36 @@ function Admin() {
           {activeTab === "certs" && (
             <div>
               <div className="d-flex justify-content-between mb-4">
-                <h3 className="admin-section-title">Certifications (Certifications Collection)</h3>
+                <h3 className="admin-section-title">Certifications ({certifications.length})</h3>
                 <button className="admin-btn" onClick={addCert}>+ NEW CERT</button>
               </div>
-              
+              {certifications.length === 0 && <p className="text-muted">Aucune certification.</p>}
+
               {certifications.map((cert) => (
                 <div key={cert.id} className="admin-item-block mb-4">
                   <Row>
                     <Col md={3}>
                       <Form.Group className="mb-2">
                         <Form.Label>Certificate</Form.Label>
-                        <Form.Control type="text" value={cert.title} onChange={(e) => updateCertLocal(cert.id, "title", e.target.value)} className="admin-input" />
+                        <Form.Control type="text" value={cert.title || ""} onChange={(e) => updateLocal("certifications", cert.id, "title", e.target.value)} className="admin-input" />
                       </Form.Group>
                     </Col>
-                    <Col md={3}>
+                    <Col md={2}>
                       <Form.Group className="mb-2">
                         <Form.Label>Issuer</Form.Label>
-                        <Form.Control type="text" value={cert.issuer} onChange={(e) => updateCertLocal(cert.id, "issuer", e.target.value)} className="admin-input" />
+                        <Form.Control type="text" value={cert.issuer || ""} onChange={(e) => updateLocal("certifications", cert.id, "issuer", e.target.value)} className="admin-input" />
                       </Form.Group>
                     </Col>
                     <Col md={2}>
                       <Form.Group className="mb-2">
                         <Form.Label>Date/Year</Form.Label>
-                        <Form.Control type="text" value={cert.date} onChange={(e) => updateCertLocal(cert.id, "date", e.target.value)} className="admin-input" />
+                        <Form.Control type="text" value={cert.date || ""} onChange={(e) => updateLocal("certifications", cert.id, "date", e.target.value)} className="admin-input" />
                       </Form.Group>
                     </Col>
                     <Col md={2}>
                       <Form.Group className="mb-2">
                         <Form.Label>Status</Form.Label>
-                        <Form.Select value={cert.status} onChange={(e) => updateCertLocal(cert.id, "status", e.target.value)} className="admin-input">
+                        <Form.Select value={cert.status || "completed"} onChange={(e) => updateLocal("certifications", cert.id, "status", e.target.value)} className="admin-input">
                           <option value="completed">Completed</option>
                           <option value="ongoing">Ongoing</option>
                         </Form.Select>
@@ -576,19 +678,24 @@ function Admin() {
                     <Col md={2}>
                       <Form.Group className="mb-2">
                         <Form.Label>Verify URL (Opt)</Form.Label>
-                        <Form.Control type="text" value={cert.link} onChange={(e) => updateCertLocal(cert.id, "link", e.target.value)} className="admin-input" />
+                        <Form.Control type="url" value={cert.link || ""} onChange={(e) => updateLocal("certifications", cert.id, "link", e.target.value)} className="admin-input" />
+                      </Form.Group>
+                    </Col>
+                    <Col md={1}>
+                      <Form.Group className="mb-2">
+                        <Form.Label>Order</Form.Label>
+                        <Form.Control type="number" value={cert.sortOrder ?? 0} onChange={(e) => updateLocal("certifications", cert.id, "sortOrder", e.target.value)} className="admin-input" />
                       </Form.Group>
                     </Col>
                   </Row>
                   <div className="mt-3">
-                    <button className="admin-btn me-2" onClick={() => saveCertToDB(cert)}>SAVE TO FIRESTORE</button>
-                    <button className="admin-btn-danger" onClick={() => handleDeleteCert(cert.id)}>DELETE CERT</button>
+                    <button className="admin-btn me-2" disabled={isBusy("certifications", cert.id)} onClick={() => saveItem("certifications", cert)}>SAVE</button>
+                    <button className="admin-btn-danger" disabled={isBusy("certifications", cert.id)} onClick={() => deleteItem("certifications", cert.id)}>DELETE CERT</button>
                   </div>
                 </div>
               ))}
             </div>
           )}
-
         </div>
       </Container>
     </div>
