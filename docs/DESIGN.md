@@ -231,7 +231,7 @@ Mise en forme : ajusté bord à bord de la grille, calculé une fois sur la poli
 
 ### 5.1 Navbar
 
-Fine, presque invisible, pour laisser la scène respirer (comme White Desert). Transparente sur le hero, fond `--color-bg` à 85 % d'opacité (sans flou) dès qu'on quitte le hero.
+Fine, presque invisible, pour laisser la scène respirer (comme White Desert). Transparente au repos en haut du hero ; dès 16 px de défilement, fond `--color-bg` à 92 % + flou 14 px + filet `--color-line` (fond plein sans `backdrop-filter`). Entériné le 2026-09-26 (QA F15) : les 85 % sans flou prévus au départ laissaient transparaître les textes clairs des scènes sous les liens.
 
 Desktop (1440 px) :
 ```
@@ -279,7 +279,8 @@ Emprunt direct à l'onglet orange de White Desert.
                                                    │t.│
                                                    └──┘
 ```
-- Visible dès `lg`, sur toutes les pages sauf Contact et Admin. Masqué quand la scène finale de l'accueil est à l'écran (règle « un seul élément braise »).
+- Visible **dès 1280 px** (décision du 2026-09-26, QA F03, remplace « dès `lg` »), sur toutes les pages sauf Contact, Admin et 404. Masqué quand la scène finale de l'accueil est à l'écran (règle « un seul élément braise »).
+- **Aucun contenu dessous** : là où l'onglet est affiché, la marge de droite devient `--margin-end` = max(`--margin`, largeur de l'onglet + 24 px), soit 68 px à 1280 et 1440 px. Elle s'applique au bord droit des conteneurs, de la grille apparente, des croix de repère et à la fin de course du carrousel des automatisations (la dernière carte s'arrête au bord du conteneur). Entre 1024 et 1279 px, la marge `lg` (40 px) est plus étroite que l'onglet (44 px) : pas d'onglet, le lien « Contact » de la navbar et le CTA du hero suffisent.
 - Libellé : « Me contacter » / « Contact me ». Cible de 44 px de large minimum.
 - Focus clavier : anneau cyan de 2 px, décalé de 3 px.
 - Mobile : pas d'onglet flottant (il masquerait le contenu) ; le contact est dans le menu et dans la scène finale.
@@ -387,6 +388,7 @@ Deux familles, jamais mélangées (retour utilisateur 2026-09-25 : animations tr
 
 - Les entrées sont toujours en ease-out ; jamais de `linear` sur une animation temporelle (le `linear`/`none` reste réservé à la correspondance directe avec le scroll).
 - Scrub lissé : `scrub: 1` pour l'épinglage Relanceo (`end: +=120%`) et le carrousel des automatisations, `scrub: 0.8` pour la dissolution du mot géant et le fil cyan. Jamais `scrub: true` (suivi brut, saccadé à la molette).
+- **Jamais d'épinglage sur un écran vide** (décision du 2026-09-26, QA F01 / F02). Fiche Relanceo : épinglée sous la navbar (`start: top top+=<navbar + 24 px>`, pas de centrage) ; l'en-tête (FIG., nom, sous-titre) se révèle à l'entrée de scène comme les autres blocs (0,8 s, `top 85%`) ; les blocs suivants sont scrubbés sur une course qui commence avant l'épinglage (haut de la fiche à 85 % de l'écran) et se termine avec lui, avec une pause finale fiche complète. À l'épinglage, environ 40 % du scrub est joué (problème et liste visibles) ; l'ancre « Voir mes projets » arrive sur le titre, le nom, le sous-titre et le problème. Carrousel des automatisations : épinglé à navbar + 16 px, contrôles compris.
 - Décalage entre éléments frères : 100 ms.
 - Seules `transform` et `opacity` sont animées pour les révélations (pas de CLS). L'état caché est posé par le moteur, jamais par le CSS : sans JS et en palier réduit, tout reste visible.
 - Exceptions conservées : entrée du hero 1,2 s (lettres), schémas de flux 1,2 s.
@@ -507,7 +509,7 @@ Le mot géant se dissout dans la brume en remontant ; le fil cyan continue de de
 │ ══════●════════════════════════════════════  fil cyan qui file vers la partie B  │
 └──────────────────────────────────────────────────────────────────────────────────┘
 ```
-- Pendant l'épinglage : la capture monte et se remet à plat, les blocs texte de gauche apparaissent l'un après l'autre. Aucun chiffre de résultat (clients, CA, taux de relance) sauf données réelles fournies par l'utilisateur.
+- Pendant l'épinglage : la capture monte et se remet à plat, les blocs texte de gauche apparaissent l'un après l'autre. L'en-tête de la fiche est déjà visible au début de l'épinglage (voir 6.5, règle « jamais d'épinglage sur un écran vide »). Aucun chiffre de résultat (clients, CA, taux de relance) sauf données réelles fournies par l'utilisateur.
 - « FIG. 01 » : légende technique à la façon d'Oxide, qui donne le ton « fiche d'expédition ».
 
 **Partie B, automatisations** (desktop : défilement horizontal épinglé ; 2 ou 3 cartes, question ouverte sur le choix) :

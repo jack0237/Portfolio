@@ -43,6 +43,15 @@ Journal de travail de `frontend-developer`. Mis à jour au fil de l'eau pour pou
   - Correctif au passage : un `onUpdate` qui lisait la constante du tween avant sa création faisait échouer silencieusement tout le reste du moteur (carrousel, révélations, arrivée). Le script de vérification contrôle maintenant que le moteur a bien démarré (éléments cachés au départ, API du carrousel présente).
   - Vérifié : build OK ; `next start` + Playwright (Chrome), défilement molette par pas de 60 px, FR / EN, 1440 x 900 (riche) et 390 x 844 (standard) : aucune erreur console, 27 `[data-reveal]` tous à opacité 1 en fin de parcours, aucun débordement horizontal ; palier réduit : rien de caché ; interrupteur « Réduire les animations » : voir ci-dessous.
 
+- [x] Correctifs QA (2026-09-26, 5e passage), détail et mesures dans `docs/AUDIT.md` (colonne « Statut »), captures `docs/screenshots/qa/fixes/`
+  - F01 / F02 Relanceo (`engine.ts`) : épinglage sous la navbar (`top top+=<nav + 24>`), en-tête révélé à l'entrée de scène, scrub des blocs suivants démarré avant l'épinglage (`top 85%`, fin = fin de l'épinglage) + pause finale. `gsap.set` + `to` au lieu d'un `from` décalé dans la timeline scrubbée (seule la 1re cible était cachée d'emblée).
+  - F03 onglet de contact : affiché dès 1280 px ; token `--margin-end` (`tokens.css`) pour le bord droit des conteneurs, de la grille, des croix et du carrousel ; fin de course du carrousel calculée sur la dernière carte et le bord du conteneur.
+  - F04 carrousel (`AutomationsCarousel.tsx`) : `aria-disabled`, entrée clavier dans la piste redirigée vers la carte affichée, `scrollLeft` de la fenêtre remis à 0 en palier riche. F07 : épinglage à navbar + 16 px + débord des contrôles.
+  - F05 : `ReactDOM.preload` du poster AVIF par ratio (`HeroScene.tsx`) ; `MotionProvider` charge le moteur après `load`. Lighthouse mobile 92 (LCP 3,2 s, TBT ~100 ms). `experimental.inlineCss` essayé : sans gain, retiré.
+  - F06 : `app/(fr)/not-found.tsx`, `app/(en)/not-found.tsx`, `src/site/components/NotFoundPage.tsx`.
+  - Mineurs : F08 (`<aside>` autour de l'onglet), F09 (intitulés du footer en `p.meta`), F11 (« Étape 01 » décalée de 12 px), F12 (onglet masqué sur Admin et 404, sélecteur de frère : pas de `:has()` sur `body`), F15 (DESIGN 5.1), S17 (`host` retiré de `robots.ts`).
+  - Vérifié : build OK ; `next start` + Playwright (Chrome) 390 à 1920, FR / EN, palier réduit : aucun débordement, aucune erreur console, 27 `[data-reveal]` à 1, 5 H2.
+
 ## Notes du 2e passage (2026-09-25)
 
 - Architecture : deux layouts racines par groupe de routes, `app/(fr)/` (`/`) et `app/(en)/en/` (`/en`) ; `global-not-found.tsx` (flag `experimental.globalNotFound`). Les futures pages suivent le même schéma (`(fr)/projects`, `(en)/en/projects`). Changer de langue recharge la page (changement de layout racine), c'est voulu.
@@ -63,8 +72,8 @@ Plus aucun depuis le 3e passage. « Contact » mène à `#contact` ; les CTA de 
 ### Points ouverts après le 3e passage
 - Sans variables `NEXT_PUBLIC_FIREBASE_*` (build local), Projets / CV / Certifications restent vides (requête Firestore client sans réponse) et Blog affiche son état vide ; `/blog/[id]` n'a pas pu être testé avec un vrai article. À vérifier en préproduction Vercel.
 - Données de repli de `utils/storage.js` et `Projects.js` : projets et expériences du template d'origine (soumya-jit.tech, « Vercel Inc. »…), affichés si les collections Firestore sont vides (SEO P0-1). À purger lors de la refonte.
-- Relanceo (palier riche) : épinglé avec `top` à 29 px, le haut du titre passe sous la navbar pendant l'épinglage ; blocs révélés au scrub, la scène paraît vide au tout début. À arbitrer en QA.
-- Admin : Bootstrap souligne l'onglet « Me contacter ». Sans incidence publique (page noindex).
+- ~~Relanceo (palier riche) : épinglé avec `top` à 29 px, le haut du titre passe sous la navbar pendant l'épinglage ; blocs révélés au scrub, la scène paraît vide au tout début.~~ Corrigé le 2026-09-26 (QA F01 / F02).
+- ~~Admin : Bootstrap souligne l'onglet « Me contacter ».~~ Onglet retiré de l'Admin le 2026-09-26 (QA F12).
 
 ### Prochain passage
 1. Validation utilisateur de l'Accueil sur les captures, puis QA `ux-qa-auditor`.
