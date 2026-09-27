@@ -99,15 +99,15 @@ const fr = {
         cards: [
           {
             id: "blog",
-            fig: "Fig. 02 · n8n · IA · Firebase",
+            fig: "Fig. 02 · n8n · IA · API",
             name: "Blog automatique",
             description:
-              "J'envoie un sujet à un bot Telegram. Gemini rédige l'article, le workflow l'enregistre dans Firestore, le blog de ce site l'affiche, et le bot me renvoie le lien.",
+              "J'envoie un sujet à un bot Telegram. Gemini rédige l'article, le workflow le publie via l'API de ce site, le blog l'affiche aussitôt, et le bot me renvoie le lien.",
             note: "Les articles de la scène Blog, plus bas, arrivent par ce chemin.",
-            stack: ["n8n", "Gemini", "Firestore", "Telegram"],
+            stack: ["n8n", "Gemini", "PostgreSQL", "Telegram"],
             diagramLabel:
-              "Message Telegram, rédaction par Gemini, enregistrement dans Firestore, confirmation avec le lien de l'article.",
-            steps: ["Telegram", "Gemini", "Firestore", "Lien"],
+              "Message Telegram, rédaction par Gemini, publication via l'API du site, confirmation avec le lien de l'article.",
+            steps: ["Telegram", "Gemini", "API", "Lien"],
           },
           {
             id: "manga",
@@ -285,15 +285,15 @@ const en: Dictionary = {
         cards: [
           {
             id: "blog",
-            fig: "Fig. 02 · n8n · AI · Firebase",
+            fig: "Fig. 02 · n8n · AI · API",
             name: "Self-publishing blog",
             description:
-              "I send a topic to a Telegram bot. Gemini writes the article, the workflow saves it to Firestore, this site's blog displays it, and the bot replies with the link.",
+              "I send a topic to a Telegram bot. Gemini writes the article, the workflow publishes it through this site's API, the blog shows it right away, and the bot replies with the link.",
             note: "The posts in the Blog section below come in this way.",
-            stack: ["n8n", "Gemini", "Firestore", "Telegram"],
+            stack: ["n8n", "Gemini", "PostgreSQL", "Telegram"],
             diagramLabel:
-              "Telegram message, article written by Gemini, saved to Firestore, confirmation with the article link.",
-            steps: ["Telegram", "Gemini", "Firestore", "Link"],
+              "Telegram message, article written by Gemini, published through the site API, confirmation with the article link.",
+            steps: ["Telegram", "Gemini", "API", "Link"],
           },
           {
             id: "manga",
