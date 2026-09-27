@@ -1,5 +1,5 @@
 import { getDictionary } from "@/i18n/dictionaries";
-import { getLatestPosts } from "@/lib/firestore";
+import { getLatestPosts } from "@/lib/api";
 import { SITE_URL, BUILD_DATE_ISO, type Locale } from "@/lib/site";
 import { Footer } from "@/site/components/Footer";
 import { JsonLd } from "@/site/components/JsonLd";

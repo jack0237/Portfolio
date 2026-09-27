@@ -1,10 +1,8 @@
 import type { Dictionary } from "@/i18n/dictionaries";
-import type { BlogPost } from "@/lib/firestore";
+import { resolveBlogImage, type BlogPost } from "@/lib/api";
 import type { Locale } from "@/lib/site";
 import { Icon } from "@/site/components/Icon";
 import { Scene } from "./Scene";
-
-const FALLBACKS = ["grille", "fil", "brume"] as const;
 
 function formatDate(post: BlogPost, locale: Locale) {
   if (post.timestamp) {
@@ -30,17 +28,17 @@ function formatReadTime(value: BlogPost["readTime"], suffix: string) {
 }
 
 function Visual({ post, index }: { post: BlogPost; index: number }) {
-  if (post.image && /^https:\/\//.test(post.image)) {
+  // URL https (média de l'API), clé historique n8n (`blogImg1`...) ou visuel de repli stable.
+  const img = resolveBlogImage(post.image, post.timestamp ?? index);
+  if (img.kind === "url") {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={post.image} alt="" width={640} height={360} loading="lazy" decoding="async" />;
+    return <img src={img.src} alt="" width={640} height={360} loading="lazy" decoding="async" />;
   }
-  const seed = post.timestamp ?? index;
-  const name = FALLBACKS[seed % FALLBACKS.length];
   return (
     <picture>
-      <source type="image/avif" srcSet={`/images/blog/blog-fallback-${name}.avif`} />
+      <source type="image/avif" srcSet={img.avif} />
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`/images/blog/blog-fallback-${name}.webp`} alt="" width={1600} height={900} loading="lazy" decoding="async" />
+      <img src={img.webp} alt="" width={1600} height={900} loading="lazy" decoding="async" />
     </picture>
   );
 }

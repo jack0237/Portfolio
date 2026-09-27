@@ -1,18 +1,20 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import blogImg1 from "../../Assets/blog-img-1.jpg";
+import { resolveBlogImage } from "../../lib/api";
 import "./BlogPost.css";
 
 // Porté tel quel depuis l'ancien site (refonte à venir). Composant serveur : l'article est lu
-// dans Firestore par la page app/(fr)/blog/[id] (404 réelle si l'identifiant n'existe pas).
+// dans l'API par la page app/(fr)/blog/[id] (404 réelle si l'identifiant n'existe pas).
 function BlogPost({ post }) {
+  const img = resolveBlogImage(post.image, post.timestamp ?? 0);
+  const heroSrc = img.kind === "url" ? img.src : img.webp;
   return (
     <article className="blog-post-page" lang={post.lang || "en"}>
       {/* Hero Section */}
       <section className="post-hero">
         <div 
           className="post-hero-bg" 
-          style={{ backgroundImage: `url(${JSON.stringify(post.image && post.image.startsWith("http") ? post.image : blogImg1.src)})` }}
+          style={{ backgroundImage: `url(${JSON.stringify(heroSrc)})` }}
         ></div>
         <div className="post-hero-overlay"></div>
         <div className="legacy-container post-hero-content">

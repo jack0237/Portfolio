@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getBlogPosts } from "@/lib/firestore";
+import { getBlogPosts } from "@/lib/api";
 import { BUILD_DATE_ISO, SITE_URL } from "@/lib/site";
 
 // Même période que le blog : les articles publiés par n8n entrent au sitemap sans rebuild (SEO 2.4).

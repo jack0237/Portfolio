@@ -3,12 +3,13 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import BlogPost from "@/components/Blog/BlogPost";
 import { LegacyShell } from "@/components/LegacyShell";
-import { getBlogPost, postDateISO } from "@/lib/firestore";
+import { getBlogPost, postDateISO, resolveBlogImage, type BlogPost as Post } from "@/lib/api";
 import { SITE_URL } from "@/lib/site";
 import { JsonLd } from "@/site/components/JsonLd";
 
-// Article : URL unique /blog/[id] (pas de /en/blog/[id], SEO 2.6), rendu serveur depuis Firestore,
-// ISR 300 s, vraie 404 pour un identifiant inconnu. Le schéma écrit par n8n ne change pas.
+// Article : URL unique /blog/[id] (pas de /en/blog/[id], SEO 2.6), rendu serveur depuis l'API
+// (api.jack0237.com), ISR 300 s + revalidation à la demande (tags `blogs`, `blog-<id>`),
+// vraie 404 pour un identifiant inconnu.
 export const revalidate = 300;
 
 // Aucun article prérendu au build : chacun est rendu à la première visite puis mis en cache (ISR).
@@ -19,6 +20,12 @@ export async function generateStaticParams() {
 type Props = { params: Promise<{ id: string }> };
 
 const loadPost = cache(async (id: string) => getBlogPost(id));
+
+/** Image de partage : média de l'article, sinon la version JPEG du visuel de repli (clé n8n ou défaut). */
+function shareImage(post: Post): { url: string; width?: number; height?: number } {
+  const img = resolveBlogImage(post.image, post.timestamp ?? 0);
+  return img.kind === "url" ? { url: img.src } : { url: img.og, width: 1200, height: 630 };
+}
 
 /** Début du contenu sans Markdown, coupé proprement vers 155 caractères (SEO 2.2). */
 function describe(markdown: string | undefined): string | undefined {
@@ -42,7 +49,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const url = `/blog/${encodeURIComponent(post.id)}`;
   const description = describe(post.content);
   const published = postDateISO(post);
-  const image = post.image?.startsWith("http") ? post.image : undefined;
+  const image = shareImage(post);
   return {
     title: post.title,
     description,
@@ -57,14 +64,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       authors: [`${SITE_URL}/`],
       tags: post.tags,
       locale: post.lang === "fr" ? "fr_FR" : "en_US",
-      images: image ? [{ url: image, alt: post.title }] : [{ url: "/og/og-home-fr.png", width: 1200, height: 630 }],
+      images: [{ ...image, alt: post.title }],
     },
     twitter: {
       card: "summary_large_image",
       creator: "@Jason_0237",
       title: post.title,
       description,
-      images: image ? [image] : ["/og/og-home-fr.png"],
+      images: [image.url],
     },
   };
 }
@@ -83,7 +90,7 @@ export default async function Page({ params }: Props) {
     ...(published ? { datePublished: published } : {}),
     author: { "@id": `${SITE_URL}/#person` },
     publisher: { "@id": `${SITE_URL}/#person` },
-    ...(post.image?.startsWith("http") ? { image: post.image } : {}),
+    image: new URL(shareImage(post).url, SITE_URL).toString(),
     inLanguage: post.lang || "en",
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     url,

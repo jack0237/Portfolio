@@ -1,6 +1,6 @@
 import Blog from "@/components/Blog/Blog";
 import { LegacyShell } from "@/components/LegacyShell";
-import { getBlogPosts } from "@/lib/firestore";
+import { getBlogPosts } from "@/lib/api";
 import { pageMetadata } from "@/site/metadata";
 
 // Liste du blog (page héritée, refonte à venir). Lue côté serveur, ISR : les articles

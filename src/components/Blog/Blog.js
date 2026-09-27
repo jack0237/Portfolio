@@ -1,24 +1,20 @@
-import blogImg1 from "../../Assets/blog-img-1.jpg";
-import blogImg2 from "../../Assets/blog-img-2.jpg";
-import blogImg3 from "../../Assets/blog-img-3.jpg";
+import { resolveBlogImage } from "../../lib/api";
 import "./Blog.css";
 
 // Porté tel quel depuis l'ancien site (refonte à venir). Composant serveur : les articles
-// sont lus dans Firestore par la page (src/lib/firestore.ts), plus de SDK côté client.
-const imgMap = {
-  blogImg1: blogImg1.src,
-  blogImg2: blogImg2.src,
-  blogImg3: blogImg3.src
-};
-
+// sont lus dans l'API (src/lib/api.ts) par la page, aucune requête côté client.
 const Link = ({ to, ...rest }) => <a href={`/blog/${encodeURIComponent(to)}`} {...rest} />;
-const imgSrc = (image) => (image && image.startsWith("http") ? image : imgMap[image]);
+// URL du média (API ou externe), ou visuel de repli pour les clés historiques n8n (`blogImg1`...).
+const imgSrc = (image, seed) => {
+  const img = resolveBlogImage(image, seed);
+  return img.kind === "url" ? img.src : img.webp;
+};
 const excerpt = (post, n) => {
   const c = post.content || "";
   return c.length > n ? c.substring(0, n) + "..." : c;
 };
 
-/** @param {{ posts?: import("../../lib/firestore").BlogPost[], emptyLabel?: string }} props */
+/** @param {{ posts?: import("../../lib/api").BlogPost[], emptyLabel?: string }} props */
 function Blog({ posts = [], emptyLabel = "" }) {
   const blogs = posts;
 
@@ -32,7 +28,7 @@ function Blog({ posts = [], emptyLabel = "" }) {
           <Link to={`${post.id}`} style={{ textDecoration: 'none' }}>
             <div className="post-card-img-wrap aspect-4-5">
               {post.image && (
-                <img src={imgSrc(post.image)} alt={post.title} className="post-card-img featured-img" />
+                <img src={imgSrc(post.image, post.timestamp ?? i)} alt={post.title} className="post-card-img featured-img" />
               )}
               <div className="post-card-gradient-overlay"></div>
               <div className="post-card-tag-wrapper">
@@ -70,7 +66,7 @@ function Blog({ posts = [], emptyLabel = "" }) {
             <div className="post-card-content">
               <p className="post-excerpt mb-6">{excerpt(post, 120)}</p>
               <div className="tags-row">
-                {(post.tags || ["#RESEARCH", "#DEVLOG"]).map((tag, idx) => (
+                {(post.tags || []).map((tag, idx) => (
                   <span key={idx} className="style-tag">{tag}</span>
                 ))}
               </div>
@@ -85,7 +81,7 @@ function Blog({ posts = [], emptyLabel = "" }) {
           <Link to={`${post.id}`} style={{ textDecoration: 'none' }}>
             <div className="post-card-img-wrap aspect-video">
               {post.image && (
-                <img src={imgSrc(post.image)} alt={post.title} className="post-card-img hover-scale-105" />
+                <img src={imgSrc(post.image, post.timestamp ?? i)} alt={post.title} className="post-card-img hover-scale-105" />
               )}
             </div>
             <div className="post-card-content flex-col gap-4">
@@ -115,7 +111,7 @@ function Blog({ posts = [], emptyLabel = "" }) {
           <Link to={`${post.id}`} style={{ textDecoration: 'none' }}>
             <div className="post-card-img-wrap aspect-square">
               {post.image && (
-                <img src={imgSrc(post.image)} alt={post.title} className="post-card-img grayscale-hover" />
+                <img src={imgSrc(post.image, post.timestamp ?? i)} alt={post.title} className="post-card-img grayscale-hover" />
               )}
             </div>
             <div className="post-card-content flex-col gap-4">
