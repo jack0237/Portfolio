@@ -100,3 +100,28 @@ Plus aucun depuis le 3e passage. « Contact » mène à `#contact` ; les CTA de 
 
 ### À intégrer après le passage timing
 Rien en attente : le passage timing étant terminé, les retouches de `home.css` (retrait de `.hero__mist`) ont été faites directement. `engine.ts`, `tokens.css`, `globals.css` non modifiés.
+
+## Bascule Firebase vers portfolio-api (branche `feat/own-api`, 2026-09-27)
+
+Firebase est abandonné (le projet exige la facturation, toutes les lectures échouaient). Le site lit et écrit désormais dans l'API auto-hébergée **https://api.jack0237.com** (Fastify + PostgreSQL, repo `portfolio-api`, voir son README section « Intégration côté site »). Départ de zéro : les collections sont vides.
+
+- [x] `src/lib/api.ts` (serveur + client) : base `NEXT_PUBLIC_API_URL` (défaut `https://api.jack0237.com`). Lectures ISR `fetch(..., { next: { revalidate: 300, tags } })`, tags du contrat de l'API : `blogs`, `blog-<id>`, `projects`, `experiences`, `skills`, `certifications`. Délai max 8 s par lecture.
+  - API injoignable **au build ou en dev** : liste vide, état vide, build OK. **En régénération ISR (production)** : l'erreur est levée pour que Next.js garde la page déjà en cache au lieu de la remplacer par une page vide.
+  - `getBlogPost(id)` : 404 de l'API = `notFound()` ; autre erreur = 500 (pas de fausse 404).
+  - `resolveBlogImage` : URL https (média de l'API) ou clé historique n8n `blogImg1/2/3` (visuels `public/images/blog/blog-fallback-{grille,fil,brume}`, version `-og.jpg` pour Open Graph et JSON-LD) ; sans image, visuel de repli stable.
+- [x] Accueil (3 derniers articles), `/blog`, `/en/blog`, `/blog/[id]`, sitemap : lecture API.
+- [x] Pages héritées Projets, CV (expériences, compétences) et Certifications : lecture **côté serveur** (ISR 300 s + tags), composants rendus sans requête client (Projets reste client pour le filtre). **Toutes les données de repli du template supprimées** (`INITIAL_*`, projets soumya-jit, « Vercel Inc. », captures `src/Assets/Projects/*`, `src/Assets/blog-img-*`) : collection vide = phrase d'état vide FR / EN. Visuel inchangé sinon.
+- [x] Admin `/admin` : connexion e-mail + mot de passe (`POST /v1/auth/login`, e-mail prérempli), `GET /v1/auth/me` au chargement, déconnexion (`POST /v1/auth/logout`), CRUD des 5 collections (`PUT` / `DELETE /v1/{collection}/{id}`, corps limité aux champs connus), envoi d'image `POST /v1/media` (champ `file`, URL stockée dans `image`), champs ordre (`sortOrder`), temps de lecture et langue ajoutés. Toutes les requêtes en `credentials: "include"`. Hors `jack0237.com`, `www.jack0237.com` et `localhost:3000` (prévisualisations Vercel comprises) : message « Admin indisponible ici » avec lien vers la production. `noindex, nofollow` conservé.
+- [x] `src/app/api/revalidate/route.ts` : `POST`, `Authorization: Bearer <REVALIDATE_SECRET>` comparé en temps constant, corps `{ collection, id, action, tags, paths }` validé, `revalidateTag(tag, { expire: 0 })` (signature Next 16 à deux arguments ; `expire: 0` = la visite suivante relit l'API) et `revalidatePath(path)`. 200 / 400 / 401 (401 aussi si le secret n'est pas configuré), `GET` = 405. Runtime Node, dynamique.
+- [x] Firebase retiré : `src/utils/firebase.js`, `src/utils/storage.js`, `src/lib/firestore.ts`, relais `REACT_APP_FIREBASE_*` de `next.config.ts`, bloc `images.remotePatterns` (next/image n'est pas utilisé), dépendance `firebase` désinstallée. Plus aucun import Firebase dans `src/`. Restent à la racine, non utilisés par le site : `firebase.json`, `firestore.rules`, `storage.rules`, `deploy_log.txt` (à supprimer quand le projet Firebase sera fermé).
+- [x] Vérifié : `npm run build` OK avec l'API réelle (vide) et avec `NEXT_PUBLIC_API_URL` injoignable (toutes les pages en état vide, ISR 5 min conservé). `next start` : `/`, `/en`, `/blog`, `/en/blog`, `/projects`, `/en/projects`, `/resume`, `/en/resume`, `/admin`, `/sitemap.xml` en 200, `/blog/<inconnu>` en 404 ; `/api/revalidate` 401 sans secret ou mauvais secret, 200 avec le secret de test, 400 pour un corps invalide. Aucune erreur console. Admin servi sous `localhost:3000` : `GET /v1/auth/me` = 401, formulaire affiché. Aucune écriture faite dans l'API réelle. Captures : `docs/screenshots/api-switch/`.
+
+### Variables Vercel
+
+| Variable | Environnements | Rôle |
+|---|---|---|
+| `REVALIDATE_SECRET` | Production (et Preview si besoin) | **Nouvelle, obligatoire** pour la revalidation à la demande. Même valeur que `REVALIDATE_SECRET` du `.env` de l'API sur le serveur, avec `REVALIDATE_URL=https://jack0237.com/api/revalidate`. Valeur dans Bitwarden, jamais dans le repo. |
+| `NEXT_PUBLIC_API_URL` | optionnelle | Seulement pour pointer vers une autre API (défaut `https://api.jack0237.com`). |
+| `REACT_APP_FIREBASE_*`, `NEXT_PUBLIC_FIREBASE_*` | | **À supprimer après le merge** : plus lues par le site. |
+
+Sans `REVALIDATE_SECRET`, le site marche mais une écriture n'apparaît qu'au bout de 5 min au plus (ISR).
