@@ -21,6 +21,12 @@ const SCRUB_LIGHT = 0.8;
 type Options = { entrance: boolean };
 type WindowWithCarousel = Window & { __jackCarousel?: { goTo: (i: number) => void } };
 
+/** Hauteur de la navbar fixe (token --nav-h), pour épingler dessous. */
+function navOffset() {
+  const nav = document.querySelector<HTMLElement>(".nav");
+  return nav ? nav.offsetHeight : 72;
+}
+
 function heroAlreadySeen() {
   try {
     return sessionStorage.getItem(HERO_SEEN_KEY) === "1";
@@ -145,22 +151,51 @@ export async function startMotion(tier: Exclude<MotionTier, "reduced">, opts: Op
     }
 
     // ---------- Relanceo : épinglage et arrivée des blocs (palier riche) ----------
+    // QA F01 / F02 (2026-09-26) : la fiche n'est jamais épinglée vide et jamais sous la navbar.
+    // - En-tête (FIG., nom, sous-titre) révélé d'emblée à l'entrée de scène, comme les autres blocs.
+    // - Les blocs suivants sont scrubbés sur une course qui commence AVANT l'épinglage
+    //   (haut de la fiche à 85 % de l'écran) et finit avec lui : à l'épinglage, environ 40 %
+    //   du scrub est déjà joué ; la fin de course est un temps de pause, fiche complète.
+    // - Épinglage sous la navbar (haut de fiche à nav + 24 px) au lieu du centrage.
     const relanceo = document.querySelector<HTMLElement>(".relanceo");
     if (relanceo) {
-      const blocks = relanceo.querySelectorAll<HTMLElement>("[data-reveal]");
-      const fits = relanceo.offsetHeight < window.innerHeight - 120;
+      const blocks = Array.from(relanceo.querySelectorAll<HTMLElement>("[data-reveal]"));
+      const head = blocks.slice(0, 3);
+      const rest = blocks.slice(3);
+      const top = navOffset() + 24;
+      const fits = relanceo.offsetHeight < window.innerHeight - top - 24;
       if (rich && fits) {
+        const pin = ScrollTrigger.create({
+          trigger: relanceo,
+          start: () => `top top+=${navOffset() + 24}`,
+          end: "+=120%",
+          pin: true,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+        });
+        gsap.from(head, {
+          opacity: 0,
+          y: 40,
+          duration: 0.8,
+          ease: EASE_REVEAL,
+          stagger: 0.1,
+          scrollTrigger: { trigger: relanceo, start: "top 85%", once: true },
+        });
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: relanceo,
-            start: "center center",
-            end: "+=120%",
-            pin: true,
+            start: "top 85%",
+            end: () => pin.end,
             scrub: SCRUB,
-            anticipatePin: 1,
+            invalidateOnRefresh: true,
           },
         });
-        tl.from(blocks, { opacity: 0, y: 40, stagger: 0.15, ease: "power2.out" });
+        // État caché posé explicitement : un from() décalé dans une timeline scrubbée ne
+        // rendait d'emblée que la première cible (les suivantes restaient visibles).
+        gsap.set(rest, { opacity: 0, y: 40 });
+        tl.to(rest, { opacity: 1, y: 0, stagger: 0.15, ease: "power2.out" });
+        // Pause finale : le dernier quart de l'épinglage montre la fiche complète.
+        tl.to({}, { duration: 0.35 });
       } else {
         gsap.from(blocks, {
           opacity: 0,
@@ -182,7 +217,22 @@ export async function startMotion(tier: Exclude<MotionTier, "reduced">, opts: Op
       if (rich && cards.length > 1) {
         auto.classList.add("is-pinned");
         track.scrollLeft = 0;
-        const distance = () => Math.max(0, track.scrollWidth - track.clientWidth);
+        // Fin de course : bord droit de la dernière carte aligné sur le bord du conteneur
+        // (marge de droite, qui réserve la place de l'onglet de contact), pas sur la fenêtre (QA F03).
+        const distance = () => {
+          const lastCard = cards[cards.length - 1];
+          const padEnd = parseFloat(getComputedStyle(track).paddingRight) || 0;
+          const overflow = lastCard.getBoundingClientRect().right - track.getBoundingClientRect().left;
+          return Math.max(0, overflow - (track.clientWidth - padEnd));
+        };
+        // Haut des contrôles (remontés à hauteur du titre) sous la navbar + 16 px (QA F07).
+        const controls = auto.querySelector<HTMLElement>(".auto__controls");
+        const pinTop = () => {
+          const overhang = controls
+            ? Math.max(0, automations.getBoundingClientRect().top - controls.getBoundingClientRect().top)
+            : 0;
+          return navOffset() + 16 + overhang;
+        };
         const last = cards.length - 1;
         let shown = -1;
         const tween = gsap.to(track, {
@@ -199,7 +249,7 @@ export async function startMotion(tier: Exclude<MotionTier, "reduced">, opts: Op
           },
           scrollTrigger: {
             trigger: automations,
-            start: "top top+=96",
+            start: () => `top top+=${pinTop()}`,
             end: () => `+=${distance()}`,
             pin: true,
             scrub: SCRUB,

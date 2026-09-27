@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <main id="main" className="legacy">
+    <main id="main" className="legacy admin-root">
       <AdminLoader />
     </main>
   );

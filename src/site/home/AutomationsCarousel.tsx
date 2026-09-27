@@ -21,6 +21,7 @@ export function AutomationsCarousel({
   children: ReactNode;
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
 
   const cards = () => Array.from(trackRef.current?.querySelectorAll<HTMLElement>("[data-card]") ?? []);
@@ -67,11 +68,34 @@ export function AutomationsCarousel({
   }, []);
 
   // Tab passe de carte en carte : on amène la carte focalisée à l'écran.
+  // Entrée dans la piste depuis l'extérieur (Tab depuis les boutons, Maj+Tab depuis la suite) :
+  // le focus va sur la carte affichée, sans rembobiner le carrousel (QA F04).
   const onFocus = (e: FocusEvent<HTMLDivElement>) => {
+    const track = trackRef.current;
     const card = (e.target as HTMLElement).closest<HTMLElement>("[data-card]");
-    if (!card) return;
-    const i = cards().indexOf(card);
-    if (i >= 0 && i !== index) goTo(i);
+    if (!track || !card) return;
+    const list = cards();
+    const i = list.indexOf(card);
+    if (i < 0) return;
+    const from = e.relatedTarget as Node | null;
+    if (!from || !track.contains(from)) {
+      const current = list[index];
+      if (current && current !== card) {
+        current.focus({ preventScroll: true });
+        // Défilement natif (palier standard) : le navigateur a déjà amené la carte d'entrée,
+        // on revient sur la carte affichée.
+        if (!(window as WindowWithCarousel).__jackCarousel) goTo(index);
+      }
+      return;
+    }
+    if (i !== index) goTo(i);
+  };
+
+  // Palier riche : la piste est déplacée en transform ; le navigateur ne doit pas faire défiler
+  // la fenêtre de visualisation (overflow hidden) pour montrer une carte focalisée.
+  const onViewportScroll = () => {
+    const vp = viewportRef.current;
+    if (vp && vp.scrollLeft !== 0 && vp.parentElement?.classList.contains("is-pinned")) vp.scrollLeft = 0;
   };
 
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -82,14 +106,27 @@ export function AutomationsCarousel({
         <span className="meta auto__count" aria-hidden="true">
           <b>{pad(index + 1)}</b> / {pad(count)}
         </span>
-        <button type="button" className="auto__btn" aria-label={labels.prev} onClick={() => goTo(index - 1)} disabled={index === 0}>
+        {/* aria-disabled et non disabled : le bouton garde le focus en bout de course (QA F04) */}
+        <button
+          type="button"
+          className="auto__btn"
+          aria-label={labels.prev}
+          aria-disabled={index === 0}
+          onClick={() => index > 0 && goTo(index - 1)}
+        >
           <Icon name="arrow-left" />
         </button>
-        <button type="button" className="auto__btn" aria-label={labels.next} onClick={() => goTo(index + 1)} disabled={index === count - 1}>
+        <button
+          type="button"
+          className="auto__btn"
+          aria-label={labels.next}
+          aria-disabled={index === count - 1}
+          onClick={() => index < count - 1 && goTo(index + 1)}
+        >
           <Icon name="arrow-right" />
         </button>
       </div>
-      <div className="auto__viewport">
+      <div className="auto__viewport" ref={viewportRef} onScroll={onViewportScroll}>
         <div className="auto__track" ref={trackRef} onFocus={onFocus}>
           {children}
         </div>

@@ -107,7 +107,7 @@ button { font: inherit; color: inherit; background: none; border: 0; padding: 0;
   width: 100%;
   max-width: var(--content-max);
   margin-inline: auto;
-  padding-inline: var(--margin);
+  padding-inline: var(--margin) var(--margin-end);
 }
 
 /* Croix de repère 9 x 9 px (signature graphique, DESIGN 2.4) */
@@ -310,13 +310,14 @@ html[data-motion="reduced"] .menu[open] { animation: none; }
 .lang a[aria-current="true"] { background: var(--color-text); color: var(--color-on-accent); }
 
 /* ---------- Onglet de contact vertical (DESIGN 5.2) ---------- */
+.contact-aside { display: none; }
 .contact-tab {
-  display: none;
+  display: inline-flex;
   position: fixed;
   right: 0;
   top: 50%;
   z-index: 40;
-  width: 44px;
+  width: var(--tab-w);
   min-height: 160px;
   padding: var(--space-4) 0;
   transform: translateY(-50%);
@@ -335,9 +336,16 @@ html[data-motion="reduced"] .menu[open] { animation: none; }
 .contact-tab:focus-visible { outline-color: var(--color-cyan); outline-offset: 3px; }
 .contact-tab[data-hidden="true"] { transform: translate(100%, -50%); opacity: 0; pointer-events: none; }
 html[data-motion="reduced"] .contact-tab { transition: none; }
-@media (min-width: 1024px) {
-  .contact-tab { display: inline-flex; }
+/* Affiché dès 1280 px seulement (QA F03) : entre 1024 et 1279 px, la marge latérale (40 px)
+   est plus étroite que l'onglet ; le lien « Contact » de la navbar et le CTA du hero suffisent. */
+@media (min-width: 1280px) {
+  .contact-aside { display: block; }
 }
+/* Jamais sur l'Admin ni sur les pages d'erreur (DESIGN 2.2, QA F12). Sélecteur de frère
+   (main est un enfant direct de body, avant l'onglet) : pas de :has() sur body, qui ferait
+   recalculer les styles de toute la page à chaque mutation du DOM (animations). */
+.admin-root ~ .contact-aside,
+.nf ~ .contact-aside { display: none; }
 
 /* ---------- Footer (DESIGN 5.4) ---------- */
 .footer {
@@ -351,7 +359,8 @@ html[data-motion="reduced"] .contact-tab { transition: none; }
 .footer__sig { font-family: var(--font-serif); font-style: italic; font-size: 28px; line-height: 1.1; color: var(--color-text); }
 .footer__id { margin-top: var(--space-4); color: var(--color-text-2); }
 .footer__id strong { display: block; color: var(--color-text); font-weight: 600; }
-.footer__col h2 { margin-bottom: var(--space-3); }
+/* Étiquettes mono (DESIGN 5.4), pas des titres : le plan reste à un H2 par scène (QA F09). */
+.footer__label { margin-bottom: var(--space-3); }
 .footer__col ul { display: grid; gap: 0; }
 .footer__col a {
   min-height: 44px;

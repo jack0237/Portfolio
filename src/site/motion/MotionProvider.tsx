@@ -46,8 +46,14 @@ export function MotionProvider() {
           });
       };
       const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
-      if (w.requestIdleCallback) w.requestIdleCallback(run, { timeout: 1200 });
-      else window.setTimeout(run, 200);
+      const schedule = () => {
+        if (w.requestIdleCallback) w.requestIdleCallback(run, { timeout: 1200 });
+        else window.setTimeout(run, 200);
+      };
+      // Après l'événement load (poster du hero compris) : le moteur (~130 Ko) ne concurrence
+      // jamais l'affichage de l'élément LCP sur mobile (QA F05).
+      if (document.readyState === "complete") schedule();
+      else window.addEventListener("load", schedule, { once: true });
     };
 
     apply();

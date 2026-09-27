@@ -1,15 +1,35 @@
 import type { Dictionary } from "@/i18n/dictionaries";
 import { CONTACT_MAILTO } from "@/lib/site";
 import { Crosses, Icon } from "@/site/components/Icon";
+import { preload } from "react-dom";
 import { HeroVisual } from "./HeroVisual";
+
+// Poster du relief = élément LCP mobile (QA F05) : fond CSS, invisible au scanner du navigateur,
+// donc préchargé dans <head> avec priorité haute. Un seul fichier par fenêtre (media calqué sur
+// HeroVisual.module.css) ; type AVIF : un navigateur sans AVIF ignore le préchargement et
+// prend le WebP du CSS.
+function preloadPoster() {
+  preload("/images/hero/relief-poster-mobile.avif", {
+    as: "image",
+    type: "image/avif",
+    media: "not all and (min-aspect-ratio: 1/1)",
+    fetchPriority: "high",
+  });
+  preload("/images/hero/relief-poster-desktop.avif", {
+    as: "image",
+    type: "image/avif",
+    media: "(min-aspect-ratio: 1/1)",
+    fetchPriority: "high",
+  });
+}
 
 // Scène 01, « Le départ » (DESIGN 7.2). Tout le contenu est visible dans le HTML initial :
 // l'animation d'entrée part de cet état (le mot géant est l'élément LCP).
 export function HeroScene({ dict }: { dict: Dictionary }) {
   const h = dict.home.hero;
+  preloadPoster();
   return (
     <section id="hero" className="hero" data-step={1} aria-labelledby="hero-title">
-      {/* Relief topographique plein cadre (poster immédiat, scène WebGL en palier riche) */}
       <HeroVisual />
       <div className="scene__grid" aria-hidden="true" />
       <div className="container hero__inner">

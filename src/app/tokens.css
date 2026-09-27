@@ -64,6 +64,10 @@
 
   /* 4 Grille (xs par défaut, mobile first) */
   --margin: 20px;
+  /* Marge de droite : égale à --margin, élargie là où l'onglet de contact fixe est affiché
+     (>= 1280 px) pour qu'aucun contenu ne passe dessous (QA F03, 2026-09-26). */
+  --margin-end: var(--margin);
+  --tab-w: 44px;
   --gutter: 16px;
   --bands: 2;
   --nav-h: 60px;
@@ -81,7 +85,7 @@
   :root { --margin: 40px; --gutter: 24px; --bands: 4; --nav-h: 72px; --scene-pad: var(--space-9); }
 }
 @media (min-width: 1280px) {
-  :root { --margin: 48px; }
+  :root { --margin: 48px; --margin-end: max(var(--margin), calc(var(--tab-w) + var(--space-5))); }
 }
 @media (min-width: 1440px) {
   :root { --margin: 64px; }

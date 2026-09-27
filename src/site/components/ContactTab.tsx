@@ -18,15 +18,18 @@ export function ContactTab({ label }: { label: string }) {
     return () => io.disconnect();
   }, []);
 
+  // <aside> nommé : l'onglet appartient à un landmark (axe « region », QA F08).
   return (
-    <a
-      className="contact-tab"
-      href={CONTACT_MAILTO}
-      data-hidden={hidden ? "true" : "false"}
-      aria-hidden={hidden ? "true" : undefined}
-      tabIndex={hidden ? -1 : undefined}
-    >
-      {label}
-    </a>
+    <aside className="contact-aside" aria-label={label}>
+      <a
+        className="contact-tab"
+        href={CONTACT_MAILTO}
+        data-hidden={hidden ? "true" : "false"}
+        aria-hidden={hidden ? "true" : undefined}
+        tabIndex={hidden ? -1 : undefined}
+      >
+        {label}
+      </a>
+    </aside>
   );
 }

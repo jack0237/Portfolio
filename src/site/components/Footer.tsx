@@ -53,7 +53,7 @@ export function Footer({
             </p>
           </div>
           <div className="footer__col">
-            <h2 className="meta">{f.pages}</h2>
+            <p className="meta footer__label">{f.pages}</p>
             <ul role="list">
               {pages.map((p) => (
                 <li key={p.href}>
@@ -63,7 +63,7 @@ export function Footer({
             </ul>
           </div>
           <div className="footer__col">
-            <h2 className="meta">{f.profiles}</h2>
+            <p className="meta footer__label">{f.profiles}</p>
             <ul role="list">
               {SOCIALS.map((s) => (
                 <li key={s.key}>
@@ -76,7 +76,7 @@ export function Footer({
             </ul>
           </div>
           <div className="footer__col">
-            <h2 className="meta">{f.contact}</h2>
+            <p className="meta footer__label">{f.contact}</p>
             <ul role="list">
               <li>
                 <a href={CONTACT_MAILTO}>{CONTACT_EMAIL}</a>

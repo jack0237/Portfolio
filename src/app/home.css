@@ -22,14 +22,14 @@
 .scene__grid::before {
   content: "";
   position: absolute;
-  inset: 0 var(--margin);
+  inset: 0 var(--margin-end) 0 var(--margin);
   border-right: 1px solid var(--color-line);
   background-image: linear-gradient(to right, var(--color-line) 1px, transparent 1px);
   background-size: calc(100% / var(--bands)) 100%;
 }
 
 .scene__inner { position: relative; }
-.scene__crosses { inset: calc(var(--scene-pad) * -0.5) var(--margin); }
+.scene__crosses { inset: calc(var(--scene-pad) * -0.5) var(--margin-end) calc(var(--scene-pad) * -0.5) var(--margin); }
 .scene__label { margin-bottom: var(--space-4); }
 .scene__head {
   display: grid;
@@ -120,7 +120,7 @@ html:not([data-motion="rich"]):not([data-motion="standard"]) .scene__dot { backg
   align-content: start;
   gap: var(--space-4);
 }
-.hero__inner > .crosses { inset: 0 var(--margin); }
+.hero__inner > .crosses { inset: 0 var(--margin-end) 0 var(--margin); }
 .hero__meta { margin-bottom: var(--space-2); }
 .hero__side { display: grid; gap: var(--space-2); }
 .hero__signature { color: var(--color-text-2); }
@@ -172,7 +172,8 @@ html:not([data-motion="rich"]):not([data-motion="standard"]) .scene__dot { backg
     row-gap: 0;
     min-height: calc(100svh - var(--nav-h) - var(--space-5) - var(--space-6));
   }
-  .hero__meta { grid-column: 1 / 4; grid-row: 1; }
+  /* Décalée de 12 px : ne chevauche plus la croix de repère en haut à gauche (QA F11). */
+  .hero__meta { grid-column: 1 / 4; grid-row: 1; padding-left: var(--space-3); }
   .hero__intro { grid-column: 1 / 6; grid-row: 2; align-self: end; margin: 0 0 var(--space-7); gap: var(--space-6); }
   .hero__value { font-size: 22px; line-height: 1.45; }
   /* Titre + alias : colonne droite, au-dessus de la ligne du prénom, alignés sur le bas des CTA.
@@ -246,8 +247,9 @@ html:not([data-motion="rich"]):not([data-motion="standard"]) .scene__dot { backg
   border: 1px solid var(--color-text-3);
   color: var(--color-text);
 }
-.auto__btn:hover:not(:disabled) { border-color: var(--color-text); background: var(--color-raised); }
-.auto__btn:disabled { opacity: 0.4; cursor: default; }
+.auto__btn:hover:not([aria-disabled="true"]) { border-color: var(--color-text); background: var(--color-raised); }
+/* aria-disabled (et non disabled) : le bouton garde le focus clavier en bout de course (QA F04). */
+.auto__btn[aria-disabled="true"] { opacity: 0.4; cursor: default; }
 .auto__btn .icon { width: 18px; height: 18px; }
 .auto__viewport { overflow: visible; }
 .auto__track {
@@ -257,9 +259,9 @@ html:not([data-motion="rich"]):not([data-motion="standard"]) .scene__dot { backg
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   padding-bottom: var(--space-2);
-  margin-inline: calc(var(--margin) * -1);
-  padding-inline: var(--margin);
-  scroll-padding-inline: var(--margin);
+  margin-inline: calc(var(--margin) * -1) calc(var(--margin-end) * -1);
+  padding-inline: var(--margin) var(--margin-end);
+  scroll-padding-inline: var(--margin) var(--margin-end);
 }
 .auto__track::-webkit-scrollbar { display: none; }
 .auto-card {
@@ -292,7 +294,7 @@ html:not([data-motion="rich"]):not([data-motion="standard"]) .scene__dot { backg
 }
 
 /* Palier riche : le moteur pilote le défilement (piste en transform, pas de scroll natif) */
-.auto.is-pinned .auto__viewport { overflow: hidden; margin-inline: calc(var(--margin) * -1); }
+.auto.is-pinned .auto__viewport { overflow: hidden; margin-inline: calc(var(--margin) * -1) calc(var(--margin-end) * -1); }
 .auto.is-pinned .auto__track { overflow: visible; scroll-snap-type: none; margin-inline: 0; }
 
 /* Palier réduit : liste verticale, contrôles masqués (DESIGN 6.4) */
